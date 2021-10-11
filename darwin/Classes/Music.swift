@@ -273,19 +273,19 @@ public class Player : NSObject, AVAudioPlayerDelegate {
             return .success
         }
         
-        //https://stackoverflow.com/questions/34563451/set-mpnowplayinginfocenter-with-other-background-audio-playing
-        //This isn't currently possible in iOS. Even just changing your category options to .MixWithOthers causes your nowPlayingInfo to be ignored.
-        do {
-            if #available(iOS 10.0, *) {
-                try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [])
-                try AVAudioSession.sharedInstance().setActive(true)
-            } else {
-                try AVAudioSession.sharedInstance().setCategory(.playback, options: [])
-                try AVAudioSession.sharedInstance().setActive(true)
-            }
-        } catch let error {
-            print(error)
-        }
+//        //https://stackoverflow.com/questions/34563451/set-mpnowplayinginfocenter-with-other-background-audio-playing
+//        //This isn't currently possible in iOS. Even just changing your category options to .MixWithOthers causes your nowPlayingInfo to be ignored.
+//        do {
+//            if #available(iOS 10.0, *) {
+//                try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [])
+//                try AVAudioSession.sharedInstance().setActive(true)
+//            } else {
+//                try AVAudioSession.sharedInstance().setCategory(.playback, options: [])
+//                try AVAudioSession.sharedInstance().setActive(true)
+//            }
+//        } catch let error {
+//            print(error)
+//        }
     }
     
     func deinitMediaPlayerNotifEvent() {
