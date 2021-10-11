@@ -64,6 +64,7 @@ class PlayerEditor {
   const PlayerEditor(this.assetsAudioPlayer);
 
   final AssetsAudioPlayer assetsAudioPlayer;
+
   PlayerEditor._(this.assetsAudioPlayer);
 
   void onAudioRemovedAt(int index) {
@@ -174,6 +175,7 @@ class AssetsAudioPlayer {
       }
     });
   }
+
   //endregion
 
   static final uuid = Uuid();
@@ -231,6 +233,7 @@ class AssetsAudioPlayer {
     bool respectSilentMode = _DEFAULT_RESPECT_SILENT_MODE,
     Duration? seek,
     double? playSpeed,
+    bool needRecord = false,
   }) {
     final player = AssetsAudioPlayer.newPlayer();
     StreamSubscription? onFinished;
@@ -247,6 +250,7 @@ class AssetsAudioPlayer {
       respectSilentMode: respectSilentMode,
       autoStart: true,
       playSpeed: playSpeed,
+      needRecord: needRecord,
     );
   }
 
@@ -280,14 +284,19 @@ class AssetsAudioPlayer {
   ///             return Text(isPlaying ? 'Pause' : 'Play');
   ///         }),
   ValueStream<bool> get isPlaying => _isPlaying.stream;
+
   String get getCurrentAudioTitle =>
       _current.value?.audio.audio.metas.title ?? '';
+
   String get getCurrentAudioArtist =>
       _current.value?.audio.audio.metas.artist ?? '';
+
   Map<String, dynamic> get getCurrentAudioextra =>
       _current.value?.audio.audio.metas.extra ?? <String, dynamic>{};
+
   String get getCurrentAudioAlbum =>
       _current.value?.audio.audio.metas.album ?? '';
+
   MetasImage? get getCurrentAudioImage =>
       _current.value?.audio.audio.metas.image;
 
@@ -369,6 +378,7 @@ class AssetsAudioPlayer {
 
   final PublishSubject<CacheDownloadInfos> _cacheDownloadInfos =
       PublishSubject<CacheDownloadInfos>();
+
   Stream<CacheDownloadInfos> get cacheDownloadInfos =>
       _cacheDownloadInfos.stream;
 
@@ -427,11 +437,14 @@ class AssetsAudioPlayer {
   bool get respectSilentMode => _respectSilentMode;
 
   bool _showNotification = false;
+
   bool get showNotification => _showNotification;
+
   set showNotification(bool newValue) {
     _showNotification = newValue;
 
-    /* await */ _sendChannel.invokeMethod(
+    /* await */
+    _sendChannel.invokeMethod(
         'showNotification', {'id': id, 'show': _showNotification});
   }
 
@@ -806,6 +819,7 @@ class AssetsAudioPlayer {
         headPhoneStrategy: _playlist!.headPhoneStrategy,
         audioFocusStrategy: _playlist!.audioFocusStrategy,
         seek: seek,
+        needRecord: _playlist!.needRecord,
       );
     }
   }
@@ -997,6 +1011,7 @@ class AssetsAudioPlayer {
     HeadPhoneStrategy? headPhoneStrategy,
     AudioFocusStrategy? audioFocusStrategy,
     NotificationSettings? notificationSettings,
+    bool? needRecord = false,
   }) async {
     final _autoStart = autoStart ?? _DEFAULT_AUTO_START;
     final _loopMode = loopMode ?? _DEFAULT_LOOP_MODE;
@@ -1015,6 +1030,7 @@ class AssetsAudioPlayer {
       try {
         final params = {
           'id': id,
+          'needRecord': needRecord,
           'audioType': audioTypeDescription(audio.audioType),
           'path': audio.path,
           'autoStart': _autoStart,
@@ -1113,6 +1129,7 @@ class AssetsAudioPlayer {
     PlayInBackground? playInBackground,
     HeadPhoneStrategy headPhoneStrategy = _DEFAULT_HEADPHONE_STRATEGY,
     AudioFocusStrategy? audioFocusStrategy,
+    bool? needRecord,
   }) async {
     _lastSeek = null;
     _replaceRealtimeSubscription();
@@ -1127,6 +1144,7 @@ class AssetsAudioPlayer {
       notificationSettings: notificationSettings,
       playInBackground: playInBackground ?? _DEFAULT_PLAY_IN_BACKGROUND,
       headPhoneStrategy: headPhoneStrategy,
+      needRecord: needRecord,
     );
     _updatePlaylistIndexes();
     _playlist!.moveTo(playlist.startIndex);
@@ -1167,6 +1185,7 @@ class AssetsAudioPlayer {
     HeadPhoneStrategy headPhoneStrategy = _DEFAULT_HEADPHONE_STRATEGY,
     AudioFocusStrategy? audioFocusStrategy,
     bool forceOpen = false, // skip the _acceptUserOpen
+    bool needRecord = false,
   }) async {
     final focusStrategy = audioFocusStrategy ?? defaultFocusStrategy;
 
@@ -1202,6 +1221,7 @@ class AssetsAudioPlayer {
           notificationSettings:
               notificationSettings ?? defaultNotificationSettings,
           playInBackground: playInBackground,
+          needRecord: needRecord,
         );
       }
       _acceptUserOpen = true;
@@ -1452,6 +1472,7 @@ class _CurrentPlaylist {
   final AudioFocusStrategy? audioFocusStrategy;
   final PlayInBackground? playInBackground;
   final HeadPhoneStrategy? headPhoneStrategy;
+  final bool? needRecord;
 
   int playlistIndex = 0;
 
@@ -1553,6 +1574,7 @@ class _CurrentPlaylist {
     this.loopMode,
     this.headPhoneStrategy,
     this.audioFocusStrategy,
+    this.needRecord,
   });
 
   void returnToFirst() {

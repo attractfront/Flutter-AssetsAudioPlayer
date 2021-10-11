@@ -173,8 +173,10 @@ public class Player : NSObject, AVAudioPlayerDelegate {
     }
     
     #if os(iOS)
-    func getAudioCategory(respectSilentMode: Bool, showNotification: Bool) ->  AVAudioSession.Category {
-        if(showNotification) {
+    func getAudioCategory(respectSilentMode: Bool, showNotification: Bool, needRecord: Bool) ->  AVAudioSession.Category {
+        if (needRecord){
+            return AVAudioSession.Category.playAndRecord
+        } else if(showNotification) {
             return AVAudioSession.Category.playback
         } else if(respectSilentMode) {
             return AVAudioSession.Category.soloAmbient
@@ -494,8 +496,8 @@ public class Player : NSObject, AVAudioPlayerDelegate {
               audioFocusStrategy: AudioFocusStrategy,
               playSpeed: Double,
               networkHeaders: NSDictionary?,
-              result: @escaping FlutterResult
-    ){
+              result: @escaping FlutterResult,
+              needRecord: Bool){
         self.stop()
         guard let url = self.getUrlByType(path: assetPath, audioType: audioType, assetPackage: assetPackage) else {
             log("resource not found \(assetPath)")
@@ -505,8 +507,9 @@ public class Player : NSObject, AVAudioPlayerDelegate {
         
         do {
             #if os(iOS)
-            let category = getAudioCategory(respectSilentMode: respectSilentMode, showNotification: displayNotification)
-            let mode = AVAudioSession.Mode.default
+            let category = getAudioCategory(respectSilentMode: respectSilentMode, showNotification: displayNotification, needRecord: needRecord)
+            let mode = needRecord ? AVAudioSession.Mode.videoChat : AVAudioSession.Mode.default
+
             
             
             print("category " + category.rawValue)
@@ -517,7 +520,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
             /* set session category and mode with options */
             if #available(iOS 10.0, *) {
                 //try AVAudioSession.sharedInstance().setCategory(category, mode: mode, options: [.mixWithOthers])
-                try AVAudioSession.sharedInstance().setCategory(category, mode: .default, options: [])
+                try AVAudioSession.sharedInstance().setCategory(category, mode: mode, options: [])
                 try AVAudioSession.sharedInstance().setActive(true)
             } else {
                 
@@ -1426,6 +1429,9 @@ class Music : NSObject, FlutterPlugin {
                 let networkHeaders = args["networkHeaders"] as? NSDictionary
                 
                 let respectSilentMode = args["respectSilentMode"] as? Bool ?? false
+                
+                let needRecord = args["needRecord"] as? Bool ?? false
+
                 let displayNotification = args["displayNotification"] as? Bool ?? false
                 
                 let audioMetas = fetchAudioMetas(from: args)
@@ -1449,7 +1455,8 @@ class Music : NSObject, FlutterPlugin {
                         audioFocusStrategy: audioFocusStrategy,
                         playSpeed: playSpeed,
                         networkHeaders: networkHeaders,
-                        result: result
+                        result: result,
+                        needRecord: needRecord
                 )
                 
             default:
