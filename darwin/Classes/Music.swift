@@ -526,6 +526,11 @@ public class Player : NSObject, AVAudioPlayerDelegate {
                     
                 }
             }
+            
+            print("play music")
+            print(AVAudioSession.sharedInstance().category)
+            print(AVAudioSession.sharedInstance().mode)
+            print(AVAudioSession.sharedInstance().categoryOptions)
             #endif
             
             var item : SlowMoPlayerItem
