@@ -508,25 +508,23 @@ public class Player : NSObject, AVAudioPlayerDelegate {
         do {
             #if os(iOS)
             let category = getAudioCategory(respectSilentMode: respectSilentMode, showNotification: displayNotification, needRecord: needRecord)
-            let mode = needRecord ? AVAudioSession.Mode.videoChat : AVAudioSession.Mode.default
-
-            
+            let mode = needRecord ? AVAudioSession.Mode.voiceChat : AVAudioSession.Mode.default
             
             print("category " + category.rawValue)
             print("mode " + mode.rawValue)
             print("displayNotification " + displayNotification.description)
             print("url: " + url.absoluteString)
-            
-            /* set session category and mode with options */
-            if #available(iOS 10.0, *) {
-                //try AVAudioSession.sharedInstance().setCategory(category, mode: mode, options: [.mixWithOthers])
-                try AVAudioSession.sharedInstance().setCategory(category, mode: .default, options: [])
-                try AVAudioSession.sharedInstance().setActive(true)
-            } else {
-                
-                try AVAudioSession.sharedInstance().setCategory(category)
-                try AVAudioSession.sharedInstance().setActive(true)
-                
+            if (AVAudioSession.sharedInstance().category != AVAudioSession.Category.playAndRecord){
+                /* set session category and mode with options */
+                if #available(iOS 10.0, *) {
+                    //try AVAudioSession.sharedInstance().setCategory(category, mode: mode, options: [.mixWithOthers])
+                    try AVAudioSession.sharedInstance().setCategory(category, mode: mode, options: [])
+                    try AVAudioSession.sharedInstance().setActive(true)
+                } else {
+                    try AVAudioSession.sharedInstance().setCategory(category)
+                    try AVAudioSession.sharedInstance().setActive(true)
+                    
+                }
             }
             #endif
             
