@@ -983,9 +983,12 @@ class AssetsAudioPlayer {
   }
 
   void _notificationPlayPause() {
+    print("__interaption__ _notificationPlayPause");
     if (_playlist?.notificationSettings?.customPlayPauseAction != null) {
+      print("__interaption__customPlayPauseAction");
       _playlist!.notificationSettings!.customPlayPauseAction!(this);
     } else {
+      print("__interaption__playOrPause");
       playOrPause();
     }
   }
@@ -1239,6 +1242,7 @@ class AssetsAudioPlayer {
   ///
   Future<void> playOrPause() async {
     final playing = _isPlaying.value ?? true;
+    print("__interaption__playing $playing");
     if (playing) {
       await pause();
     } else {

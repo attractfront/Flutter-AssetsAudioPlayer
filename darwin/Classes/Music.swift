@@ -510,9 +510,9 @@ public class Player : NSObject, AVAudioPlayerDelegate {
             let category = getAudioCategory(respectSilentMode: respectSilentMode, showNotification: displayNotification, needRecord: needRecord)
             let mode = needRecord ? AVAudioSession.Mode.voiceChat : AVAudioSession.Mode.default
             
-            print("category " + category.rawValue)
-            print("mode " + mode.rawValue)
-            print("displayNotification " + displayNotification.description)
+//            print("category " + category.rawValue)
+//            print("mode " + mode.rawValue)
+//            print("displayNotification " + displayNotification.description)
             print("url: " + url.absoluteString)
             if (AVAudioSession.sharedInstance().category != AVAudioSession.Category.playAndRecord){
                 /* set session category and mode with options */
@@ -745,15 +745,18 @@ public class Player : NSObject, AVAudioPlayerDelegate {
             
         case .ended:
             // An interruption ended. Resume playback, if appropriate.
-            
+            print("__interaption__ interaption ended")
             guard let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt else { return }
             let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
             if options.contains(.shouldResume) {
+                print("__interaption__ options.contains(.shouldResume)")
                 if(self.audioFocusStrategy.resumeAfterInterruption) {
+                    print("__interaption__ resumeAfterInterruption")
                     self.invokeListenerPlayPause()
                 }
                 // Interruption ended. Playback should resume.
             } else {
+                print("__interaption__ options.not contains(.shouldResume)")
                 // Interruption ended. Playback should not resume.
             }
             
