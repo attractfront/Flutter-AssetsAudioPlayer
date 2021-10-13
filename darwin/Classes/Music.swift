@@ -735,8 +735,8 @@ public class Player : NSObject, AVAudioPlayerDelegate {
         guard let userInfo = notification.userInfo,
             let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
             let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
-            print("__interaption__ typeValue \(typeValue)");
-            print("__interaption__ type \(type))");
+            print("__interaption__ has no type \(notification.userInfo?[AVAudioSessionInterruptionTypeKey])");
+            print("__interaption__ has no type \(notification.userInfo?[AVAudioSessionInterruptionTypeKey])");
                 return
         }
         
