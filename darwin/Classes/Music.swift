@@ -530,7 +530,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
             print("play music")
             print(AVAudioSession.sharedInstance().category)
             print(AVAudioSession.sharedInstance().mode)
-            print(AVAudioSession.sharedInstance().categoryOptions)
+           // print(AVAudioSession.sharedInstance().categoryOptions)
             #endif
             
             var item : SlowMoPlayerItem
@@ -725,14 +725,18 @@ public class Player : NSObject, AVAudioPlayerDelegate {
     }
     
     @objc func handleInterruption(_ notification: Notification) {
+        print("__interaption__ handleInterruption \(notification.userInfo)");
         #if os(iOS)
         if(!self.audioFocusStrategy.request) {
+            print("__interaption__ self.audioFocusStrategy.request)");
             return
         }
         
         guard let userInfo = notification.userInfo,
             let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
             let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+            print("__interaption__ typeValue \(typeValue)");
+            print("__interaption__ type \(type))");
                 return
         }
         
@@ -740,6 +744,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
         switch type {
             
         case .began:
+            print("__interaption__ interaption start")
             // An interruption began. Update the UI as needed.
             pause()
             
