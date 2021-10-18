@@ -558,6 +558,10 @@ public class Player : NSObject, AVAudioPlayerDelegate {
             #if os(iOS)
             //phone call
             notifCenter.addObserver(self,
+                                  selector: #selector(self.routeChange(_:)),
+                                                   name: AVAudioSession.routeChangeNotification,
+                                  object: AVAudioSession.sharedInstance())
+            notifCenter.addObserver(self,
                                     selector: #selector(self.handleInterruption(_:)),
                                     name: AVAudioSession.interruptionNotification,
                                     object: AVAudioSession.sharedInstance()
@@ -724,19 +728,61 @@ public class Player : NSObject, AVAudioPlayerDelegate {
         return self.getMillisecondsFromCMTime(time) / 1000;
     }
     
+    @objc func routeChange(_ notification: Notification) {
+        
+        #if os(iOS)
+        if(!self.audioFocusStrategy.request) {
+            print("__routeChange__ self.audioFocusStrategy.request)");
+            return
+        }
+        guard let userInfo = notification.userInfo else{
+            print("__routeChange__ user info nil");
+                return
+        }
+        print("__interaption__ userInfo \(userInfo)")
+        guard let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt else{
+            print("__routeChange__ typeValue nil");
+                return
+        }
+        print("__interaption__ typeValue \(typeValue)")
+        guard let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+            print("__routeChange__ has no type");
+                return
+        }
+        switch (type) {
+            case .began:
+                print("__routeChange__ Audio Session Interruption case started.")
+                break;
+
+            case .ended:
+            print("__routeChange__ Audio Session Interruption case ended.")
+                break;
+
+            default:
+            print("__routeChange__ Audio Session Interruption Notification case default.")
+                break;
+        }
+    }
+    
     @objc func handleInterruption(_ notification: Notification) {
-        print("__interaption__ handleInterruption \(notification.userInfo)");
         #if os(iOS)
         if(!self.audioFocusStrategy.request) {
             print("__interaption__ self.audioFocusStrategy.request)");
             return
         }
         
-        guard let userInfo = notification.userInfo,
-            let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
-            let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
-            print("__interaption__ has no type \(notification.userInfo?[AVAudioSessionInterruptionTypeKey])");
-            print("__interaption__ has no type \(notification.userInfo?[AVAudioSessionInterruptionTypeKey])");
+        guard let userInfo = notification.userInfo else{
+            print("__interaption__ user info nil");
+                return
+        }
+        print("__interaption__ userInfo \(userInfo)")
+        guard let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt else{
+            print("__interaption__ typeValue nil");
+                return
+        }
+        print("__interaption__ typeValue \(typeValue)")
+        guard let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+            print("__interaption__ has no type");
                 return
         }
         
@@ -765,7 +811,8 @@ public class Player : NSObject, AVAudioPlayerDelegate {
                 // Interruption ended. Playback should not resume.
             }
             
-        default: ()
+        default: print("__interaption__ Audio Session Interruption Notification case default.")
+            break;
         }
         #endif
     }
