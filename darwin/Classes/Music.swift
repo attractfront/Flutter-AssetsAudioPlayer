@@ -762,6 +762,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
             print("__routeChange__ Audio Session Interruption Notification case default.")
                 break;
         }
+        #endif
     }
     
     @objc func handleInterruption(_ notification: Notification) {
