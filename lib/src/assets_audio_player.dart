@@ -53,6 +53,7 @@ const String METHOD_NOTIFICATION_PLAY_OR_PAUSE = 'player.playOrPause';
 const String METHOD_PLAY_SPEED = 'player.playSpeed';
 const String METHOD_ERROR = 'player.error';
 const String METHOD_AUDIO_SESSION_ID = 'player.audioSessionId';
+const String METHOD_PLAY_AFTER_INTERRUPTION = 'player.afterInterruption';
 
 enum PlayerState {
   play,
@@ -349,6 +350,11 @@ class AssetsAudioPlayer {
   /// })
   final PublishSubject<Playing> _playlistAudioFinished = PublishSubject();
 
+  ValueStream<bool> get playAfterInterruption => _playAfterInterruption.stream;
+
+  final BehaviorSubject<bool> _playAfterInterruption =
+      BehaviorSubject<bool>.seeded(false);
+
   /// Called when the current playlist song has finished
   /// Using a playlist, the `finished` stram will be called only if the complete playlist finished
   Stream<Playing> get playlistAudioFinished => _playlistAudioFinished.stream;
@@ -619,6 +625,9 @@ class AssetsAudioPlayer {
           final bool playing = call.arguments;
           _isPlaying.add(playing);
           _playerState.add(playing ? PlayerState.play : PlayerState.pause);
+          break;
+        case METHOD_PLAY_AFTER_INTERRUPTION:
+          _playAfterInterruption.add(true);
           break;
         case METHOD_VOLUME:
           _volume.add(call.arguments);
