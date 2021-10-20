@@ -845,10 +845,10 @@ public class Player : NSObject, AVAudioPlayerDelegate {
         self.player?.seek(to: CMTime.zero)
         self.playing = false
         self.currentTimeTimer?.invalidate()
+        removeObservers()
         #if os(iOS)
         self._deinit()
         #endif
-        NotificationCenter.default.removeObserver(self)
         self.observerStatus.forEach {
             $0.invalidate()
         }
@@ -857,6 +857,15 @@ public class Player : NSObject, AVAudioPlayerDelegate {
         self.nowPlayingInfo.removeAll()
         #endif
         self.player = nil
+    }
+    
+    func removeObservers(){
+        print("remove observer")
+        NotificationCenter.default.removeObserver(self,  name: AVAudioSession.routeChangeNotification,
+                                                  object: AVAudioSession.sharedInstance())
+        NotificationCenter.default.removeObserver(self,  name: AVAudioSession.interruptionNotification,
+                                                  object: AVAudioSession.sharedInstance())
+        NotificationCenter.default.removeObserver(self)
     }
 
     func play(){
@@ -965,7 +974,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
     }
 
     func _deinit(){
-        NotificationCenter.default.removeObserver(self)
+        removeObservers()
         self.observerStatus.forEach {
             $0.invalidate()
         }
