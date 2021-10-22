@@ -447,25 +447,25 @@ class Player(
     private var volumeBeforePhoneStateChanged: Double? = null
     private var wasPlayingBeforeEnablePlayChange: Boolean? = null
     fun updateEnableToPlay(audioState: StopWhenCall.AudioState) {
-        print('updateEnableToPlay');
+        print("updateEnableToPlay");
         (audioFocusStrategy as? AudioFocusStrategy.Request)?.let { audioFocusStrategy ->
             when (audioState) {
                 StopWhenCall.AudioState.AUTHORIZED_TO_PLAY -> {
-                    print('updateEnableToPlay StopWhenCall.AudioState.AUTHORIZED_TO_PLAY');
+                    print("updateEnableToPlay StopWhenCall.AudioState.AUTHORIZED_TO_PLAY");
                     this.isEnabledToPlayPause = true //this one must be called before play/pause()
                     this.isEnabledToChangeVolume = true //this one must be called before play/pause()
-                    print('audioFocusStrategy.resumeAfterInterruption');
+                    print("audioFocusStrategy.resumeAfterInterruption");
                     print(audioFocusStrategy.resumeAfterInterruption);
                     if(audioFocusStrategy.resumeAfterInterruption) {
                         wasPlayingBeforeEnablePlayChange?.let {
-                            print('wasPlayingBeforeEnablePlayChange');
+                            print("wasPlayingBeforeEnablePlayChange");
                             print(it);
                             //phone call ended
                             if (it) {
-                                print('updateEnableToPlay StopWhenCall.AudioState.AUTHORIZED_TO_PLAY play');
+                                print("updateEnableToPlay StopWhenCall.AudioState.AUTHORIZED_TO_PLAY play");
                                 playerPlay()
                             } else {
-                                print('updateEnableToPlay StopWhenCall.AudioState.AUTHORIZED_TO_PLAY pause');
+                                print("updateEnableToPlay StopWhenCall.AudioState.AUTHORIZED_TO_PLAY pause");
                                 pause()
                             }
                         }
@@ -477,13 +477,13 @@ class Player(
                     volumeBeforePhoneStateChanged = null
                 }
                 StopWhenCall.AudioState.REDUCE_VOLUME -> {
-                    print('updateEnableToPlay StopWhenCall.AudioState.REDUCE_VOLUME');
+                    print("updateEnableToPlay StopWhenCall.AudioState.REDUCE_VOLUME");
                     volumeBeforePhoneStateChanged = this.volume
                     setVolume(VOLUME_WHEN_REDUCED)
                     this.isEnabledToChangeVolume = false //this one must be called after setVolume()
                 }
                 StopWhenCall.AudioState.FORBIDDEN -> {
-                    print('updateEnableToPlay StopWhenCall.AudioState.FORBIDDEN');
+                    print("updateEnableToPlay StopWhenCall.AudioState.FORBIDDEN");
                     wasPlayingBeforeEnablePlayChange = this.isPlaying
                     pause()
                     this.isEnabledToPlayPause = false //this one must be called after pause()
