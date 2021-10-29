@@ -508,7 +508,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
         do {
             #if os(iOS)
             let category = getAudioCategory(respectSilentMode: respectSilentMode, showNotification: displayNotification, needRecord: needRecord)
-            let mode = needRecord ? AVAudioSession.Mode.voiceChat : AVAudioSession.Mode.default
+            let mode = needRecord ? AVAudioSession.Mode.voiceChat : AVAudioSession.Mode.moviePlayback
             debugPrint("url: " + url.absoluteString)
             if (AVAudioSession.sharedInstance().category != AVAudioSession.Category.playAndRecord){
                 /* set session category and mode with options */
