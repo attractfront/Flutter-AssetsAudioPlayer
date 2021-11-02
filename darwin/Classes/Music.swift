@@ -538,6 +538,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
             } else {
                 item = SlowMoPlayerItem(url: url)
             }
+            item.audioTimePitchAlgorithm = .timeDomain
             self.player = AVQueuePlayer(playerItem: item)
 
 
@@ -594,13 +595,15 @@ public class Player : NSObject, AVAudioPlayerDelegate {
                         self?.setupMediaPlayerNotificationView(notificationSettings: notificationSettings, audioMetas: audioMetas, isPlaying: false)
                         #endif
                     }
+                    
+                    self?.setPlaySpeed(playSpeed: playSpeed)
+                    
 
                     if(autoStart == true){
                         self?.play()
                     }
 
                     self?.setVolume(volume: volume)
-                    self?.setPlaySpeed(playSpeed: playSpeed)
 
                     if(seek != nil){
                         self?.seek(to: seek!)

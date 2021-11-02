@@ -23,10 +23,12 @@ abstract class PlayerImplem(
                      assetAudioPath: String?,
                      audioType: String,
                      networkHeaders: Map<*, *>?,
-                     assetAudioPackage: String?
+                     assetAudioPackage: String?,
+                     drmConfiguration: Map<*, *>?
     ) : DurationMS
     abstract fun release()
     abstract fun seekTo(to: Long)
     abstract fun setVolume(volume: Float)
     abstract fun setPlaySpeed(playSpeed: Float)
+    abstract fun setPitch(pitch: Float)
 }
