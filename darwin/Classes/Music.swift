@@ -514,8 +514,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
                 /* set session category and mode with options */
                 if #available(iOS 10.0, *) {
                     //try AVAudioSession.sharedInstance().setCategory(category, mode: mode, options: [.mixWithOthers])
-                    debugPrint("set options .defaultToSpeaker")
-                    try AVAudioSession.sharedInstance().setCategory(category, mode: mode, options: [.defaultToSpeaker])
+                    try AVAudioSession.sharedInstance().setCategory(category, mode: mode, options: [])
                     try AVAudioSession.sharedInstance().setActive(true)
                 } else {
                     try AVAudioSession.sharedInstance().setCategory(category)
