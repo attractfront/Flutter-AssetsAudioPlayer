@@ -510,15 +510,11 @@ public class Player : NSObject, AVAudioPlayerDelegate {
             let category = getAudioCategory(respectSilentMode: respectSilentMode, showNotification: displayNotification, needRecord: needRecord)
         
             let mode = needRecord ? AVAudioSession.Mode.voiceChat : AVAudioSession.Mode.moviePlayback
-            let options = needRecord ? [] : [.mixWithOthers]
             debugPrint("url: " + url.absoluteString)
-            debugPrint("category: " + category)
-            debugPrint("mode: " + mode)
-            debugPrint("options: " + options)
             if (AVAudioSession.sharedInstance().category != AVAudioSession.Category.playAndRecord){
                 /* set session category and mode with options */
                 if #available(iOS 10.0, *) {
-                    try AVAudioSession.sharedInstance().setCategory(category, mode: mode, options: options)
+                    try AVAudioSession.sharedInstance().setCategory(category, mode: mode, options:  needRecord ? [] : [.mixWithOthers])
                     try AVAudioSession.sharedInstance().setActive(true)
                 } else {
                     try AVAudioSession.sharedInstance().setCategory(category)
@@ -527,9 +523,10 @@ public class Player : NSObject, AVAudioPlayerDelegate {
                 }
             }
 
-//            debugPrint("play music")
-//            debugPrint(AVAudioSession.sharedInstance().category)
-//            debugPrint(AVAudioSession.sharedInstance().mode)
+            debugPrint("play music")
+            debugPrint(AVAudioSession.sharedInstance().category)
+            debugPrint(AVAudioSession.sharedInstance().mode)
+            debugPrint(AVAudioSession.sharedInstance().categoryOptions)
             #endif
 
             var item : SlowMoPlayerItem
