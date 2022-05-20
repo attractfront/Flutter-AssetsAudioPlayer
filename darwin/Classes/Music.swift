@@ -176,12 +176,10 @@ public class Player : NSObject, AVAudioPlayerDelegate {
     func getAudioCategory(respectSilentMode: Bool, showNotification: Bool, needRecord: Bool) ->  AVAudioSession.Category {
         if (needRecord){
             return AVAudioSession.Category.playAndRecord
-        } else if(showNotification) {
-            return AVAudioSession.Category.multiRoute //playback
         } else if(respectSilentMode) {
-            return AVAudioSession.Category.multiRoute //soloAmbient
+            return AVAudioSession.Category.soloAmbient
         } else {
-            return AVAudioSession.Category.multiRoute //playback
+            return AVAudioSession.Category.playback
         }
     }
     #endif
@@ -514,7 +512,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
             if (AVAudioSession.sharedInstance().category != category){
                 /* set session category and mode with options */
                 if #available(iOS 10.0, *) {
-                    try AVAudioSession.sharedInstance().setCategory(category, mode: mode, options:  needRecord ? [] : [.mixWithOthers])
+                    try AVAudioSession.sharedInstance().setCategory(category, mode: mode, options: [])
                     try AVAudioSession.sharedInstance().setActive(true)
                 } else {
                     try AVAudioSession.sharedInstance().setCategory(category)
@@ -739,9 +737,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
             debugPrint("__routeChange__ reason nil");
                 return
         }
-        if (reason == AVAudioSession.RouteChangeReason.categoryChange.rawValue){
-            self.channel.invokeMethod(Music.METHOD_PLAY_AFTER_INTERRUPTION, arguments: [])
-        }
+        self.channel.invokeMethod(Music.METHOD_PLAY_AFTER_INTERRUPTION, arguments: [reason])
         debugPrint("__routeChange__ reason \(reason)")
         #endif
     }

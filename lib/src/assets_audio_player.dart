@@ -350,10 +350,10 @@ class AssetsAudioPlayer {
   /// })
   final PublishSubject<Playing> _playlistAudioFinished = PublishSubject();
 
-  ValueStream<bool> get playAfterInterruption => _playAfterInterruption.stream;
+  ValueStream<int> get playAfterInterruption => _playAfterInterruption.stream;
 
-  final BehaviorSubject<bool> _playAfterInterruption =
-      BehaviorSubject<bool>.seeded(false);
+  final BehaviorSubject<int> _playAfterInterruption =
+      BehaviorSubject<int>.seeded(0);
 
   /// Called when the current playlist song has finished
   /// Using a playlist, the `finished` stram will be called only if the complete playlist finished
@@ -627,7 +627,7 @@ class AssetsAudioPlayer {
           _playerState.add(playing ? PlayerState.play : PlayerState.pause);
           break;
         case METHOD_PLAY_AFTER_INTERRUPTION:
-          _playAfterInterruption.add(true);
+          _playAfterInterruption.add(call.arguments);
           break;
         case METHOD_VOLUME:
           _volume.add(call.arguments);
