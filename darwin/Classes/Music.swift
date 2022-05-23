@@ -173,18 +173,6 @@ public class Player : NSObject, AVAudioPlayerDelegate {
     }
 
     #if os(iOS)
-    func getAudioCategory(respectSilentMode: Bool, showNotification: Bool, needRecord: Bool) ->  AVAudioSession.Category {
-        if (needRecord){
-            return AVAudioSession.Category.playAndRecord
-        } else if(respectSilentMode) {
-            return AVAudioSession.Category.soloAmbient
-        } else {
-            return AVAudioSession.Category.playback
-        }
-    }
-    #endif
-
-    #if os(iOS)
     var targets: [String:Any] = [:]
 
     func showNotification(show: Bool) {
@@ -480,6 +468,9 @@ public class Player : NSObject, AVAudioPlayerDelegate {
     }
 
     var currentSongDurationMs : Float64 = Float64(0.0)
+    var respectSilentMode = false
+    var needRecord = false
+    var playStream = false
 
     func open(assetPath: String,
               assetPackage: String?,
@@ -495,8 +486,12 @@ public class Player : NSObject, AVAudioPlayerDelegate {
               playSpeed: Double,
               networkHeaders: NSDictionary?,
               result: @escaping FlutterResult,
-              needRecord: Bool){
+              needRecord: Bool,
+              playStream: Bool){
         self.stop()
+        self.needRecord = needRecord
+        self.playStream = playStream
+        self.respectSilentMode = respectSilentMode
         guard let url = self.getUrlByType(path: assetPath, audioType: audioType, assetPackage: assetPackage) else {
             log("resource not found \(assetPath)")
             result("")
@@ -504,27 +499,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
         }
 
         do {
-            #if os(iOS)
-            let category = getAudioCategory(respectSilentMode: respectSilentMode, showNotification: displayNotification, needRecord: needRecord)
-        
-            let mode = needRecord ? AVAudioSession.Mode.voiceChat : AVAudioSession.Mode.moviePlayback
-            debugPrint("url: " + url.absoluteString)
-            if (AVAudioSession.sharedInstance().category != category){
-                /* set session category and mode with options */
-                if #available(iOS 10.0, *) {
-                    try AVAudioSession.sharedInstance().setCategory(category, mode: mode, options: [])
-                    try AVAudioSession.sharedInstance().setActive(true)
-                } else {
-                    try AVAudioSession.sharedInstance().setCategory(category)
-                    try AVAudioSession.sharedInstance().setActive(true)
-
-                }
-            }
-
-            debugPrint("play music")
-            debugPrint(AVAudioSession.sharedInstance().category)
-            debugPrint(AVAudioSession.sharedInstance().mode)
-            #endif
+            setupCategories()
 
             var item : SlowMoPlayerItem
             if networkHeaders != nil && networkHeaders!.count > 0 {
@@ -551,7 +526,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
             #if os(iOS)
             //phone call
             notifCenter.addObserver(self,
-                                  selector: #selector(self.routeChange(_:)),
+                                  selector: #selector(self.routeChange),
                                                    name: AVAudioSession.routeChangeNotification,
                                   object: AVAudioSession.sharedInstance())
             notifCenter.addObserver(self,
@@ -598,6 +573,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
                     }
 
                     self?.setVolume(volume: volume)
+
                     self?.setPlaySpeed(playSpeed: playSpeed)
 
                     if(seek != nil){
@@ -644,6 +620,100 @@ public class Player : NSObject, AVAudioPlayerDelegate {
             log(error.localizedDescription)
             print(error.localizedDescription)
         }
+    }
+
+    func setupCategories(){
+        #if os(iOS)
+        do{
+            let session = AVAudioSession.sharedInstance()
+            let headphonesConnected = playStream ? session.currentRoute.outputs.filter({
+                $0.portType == .builtInSpeaker
+            }).isEmpty : false
+            var category = AVAudioSession.Category.playback
+            var mode = AVAudioSession.Mode.moviePlayback
+            if (needRecord || headphonesConnected){
+                category =  AVAudioSession.Category.playAndRecord
+                mode = AVAudioSession.Mode.voiceChat
+            }
+            if (session.category != category){
+                /* set session category and mode with options */
+                if #available(iOS 10.0, *) {
+                    try AVAudioSession.sharedInstance().setCategory(category, mode: mode, options: [])
+                    try AVAudioSession.sharedInstance().setActive(true)
+                } else {
+                    try AVAudioSession.sharedInstance().setCategory(category)
+                    try AVAudioSession.sharedInstance().setActive(true)
+
+                }
+                debugPrint("play music")
+                debugPrint(AVAudioSession.sharedInstance().category)
+                debugPrint(AVAudioSession.sharedInstance().mode)
+            }
+        } catch (_){ }
+        #endif
+    }
+
+    @objc func routeChange(notification: Notification) {
+        guard let userInfo = notification.userInfo,
+            let reasonValue = userInfo[AVAudioSessionRouteChangeReasonKey] as? UInt,
+            let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue) else {
+                return
+        }
+        // Switch over the route change reason.
+
+        print("reason")
+        print(reason)
+        switch reason {
+
+        case .newDeviceAvailable: // New device found.
+            setupCategories()
+        case .oldDeviceUnavailable: // Old device removed.
+                setupCategories()
+
+        default: ()
+        }
+    }
+
+    @objc func handleInterruption(_ notification: Notification) {
+        #if os(iOS)
+        if(!self.audioFocusStrategy.request) {
+            return
+        }
+
+        guard let userInfo = notification.userInfo,
+            let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+            let type = AVAudioSession.InterruptionType(rawValue: typeValue) else{
+                return
+        }
+
+        // Switch over the interruption type.
+        switch type {
+
+        case .began:
+            debugPrint("__interaption__ interaption began")
+            // An interruption began. Update the UI as needed.
+            pause()
+
+        case .ended:
+            // An interruption ended. Resume playback, if appropriate.
+            debugPrint("__interaption__ interaption ended")
+            guard let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt else { return }
+            let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
+            if options.contains(.shouldResume) {
+                if(self.audioFocusStrategy.resumeAfterInterruption) {
+                    self.invokeListenerPlayPause()
+                }
+                // Interruption ended. Playback should resume.
+            } else {
+                debugPrint("__interaption__ options.not contains(.shouldResume)")
+                // Interruption ended. Playback should not resume.
+            }
+
+        default:
+            debugPrint("__interaption__ Audio Session Interruption Notification case default.")
+            break;
+        }
+        #endif
     }
 
     // Getting error from Notification payload
@@ -721,68 +791,26 @@ public class Player : NSObject, AVAudioPlayerDelegate {
         return self.getMillisecondsFromCMTime(time) / 1000;
     }
 
-    @objc func routeChange(_ notification: Notification) {
-
-        #if os(iOS)
-        if(!self.audioFocusStrategy.request) {
-            debugPrint("__routeChange__ self.audioFocusStrategy.request)");
-            return
-        }
-        guard let userInfo = notification.userInfo else{
-            debugPrint("__routeChange__ user info nil");
-                return
-        }
-        print("__routeChange__ userInfo \(userInfo)")
-        guard let reason = userInfo[AVAudioSessionRouteChangeReasonKey] as? UInt else{
-            debugPrint("__routeChange__ reason nil");
-                return
-        }
-        self.channel.invokeMethod(Music.METHOD_PLAY_AFTER_INTERRUPTION, arguments: [reason])
-        debugPrint("__routeChange__ reason \(reason)")
-        #endif
-    }
-
-    @objc func handleInterruption(_ notification: Notification) {
-        #if os(iOS)
-        if(!self.audioFocusStrategy.request) {
-            return
-        }
-
-        guard let userInfo = notification.userInfo,
-            let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
-            let type = AVAudioSession.InterruptionType(rawValue: typeValue) else{
-                return
-        }
-
-        // Switch over the interruption type.
-        switch type {
-
-        case .began:
-            debugPrint("__interaption__ interaption began")
-            // An interruption began. Update the UI as needed.
-            pause()
-
-        case .ended:
-            // An interruption ended. Resume playback, if appropriate.
-            debugPrint("__interaption__ interaption ended")
-            guard let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt else { return }
-            let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
-            if options.contains(.shouldResume) {
-                if(self.audioFocusStrategy.resumeAfterInterruption) {
-                    self.invokeListenerPlayPause()
-                }
-                // Interruption ended. Playback should resume.
-            } else {
-                debugPrint("__interaption__ options.not contains(.shouldResume)")
-                // Interruption ended. Playback should not resume.
-            }
-
-        default:
-            debugPrint("__interaption__ Audio Session Interruption Notification case default.")
-            break;
-        }
-        #endif
-    }
+//    @objc func routeChange(_ notification: Notification) {
+//
+//        #if os(iOS)
+//        if(!self.audioFocusStrategy.request) {
+//            debugPrint("__routeChange__ self.audioFocusStrategy.request)");
+//            return
+//        }
+//        guard let userInfo = notification.userInfo else{
+//            debugPrint("__routeChange__ user info nil");
+//                return
+//        }
+//        print("__routeChange__ userInfo \(userInfo)")
+//        guard let reason = userInfo[AVAudioSessionRouteChangeReasonKey] as? UInt else{
+//            debugPrint("__routeChange__ reason nil");
+//                return
+//        }
+//        self.channel.invokeMethod(Music.METHOD_PLAY_AFTER_INTERRUPTION, arguments: [reason])
+//        debugPrint("__routeChange__ reason \(reason)")
+//        #endif
+//    }
 
     private func setBuffering(_ value: Bool){
         self.channel.invokeMethod(Music.METHOD_IS_BUFFERING, arguments: value)
@@ -795,6 +823,9 @@ public class Player : NSObject, AVAudioPlayerDelegate {
 
     func setVolume(volume: Double){
         self.player?.volume = Float(volume)
+
+        print("setPlayerVolume")
+        print(self.player?.volume)
         self.channel.invokeMethod(Music.METHOD_VOLUME, arguments: volume)
     }
 
@@ -854,7 +885,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
         #endif
         self.player = nil
     }
-    
+
     func removeObservers(){
         print("remove observer")
         NotificationCenter.default.removeObserver(self,  name: AVAudioSession.routeChangeNotification,
@@ -1204,6 +1235,7 @@ class Music : NSObject, FlutterPlugin {
                 }
                 self.getOrCreatePlayer(id: id)
                     .setVolume(volume: volume)
+
                 result(true)
 
             case "playSpeed" :
@@ -1466,6 +1498,7 @@ class Music : NSObject, FlutterPlugin {
                 let respectSilentMode = args["respectSilentMode"] as? Bool ?? false
 
                 let needRecord = args["needRecord"] as? Bool ?? false
+                let playStream = args["playStream"] as? Bool ?? false
 
                 let displayNotification = args["displayNotification"] as? Bool ?? false
 
@@ -1491,7 +1524,8 @@ class Music : NSObject, FlutterPlugin {
                         playSpeed: playSpeed,
                         networkHeaders: networkHeaders,
                         result: result,
-                        needRecord: needRecord
+                        needRecord: needRecord,
+                        playStream: playStream
                 )
 
             default:

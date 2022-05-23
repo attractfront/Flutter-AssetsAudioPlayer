@@ -235,6 +235,7 @@ class AssetsAudioPlayer {
     Duration? seek,
     double? playSpeed,
     bool needRecord = false,
+    bool playStream = false,
   }) {
     final player = AssetsAudioPlayer.newPlayer();
     StreamSubscription? onFinished;
@@ -252,6 +253,7 @@ class AssetsAudioPlayer {
       autoStart: true,
       playSpeed: playSpeed,
       needRecord: needRecord,
+      playStream: playStream,
     );
   }
 
@@ -627,7 +629,10 @@ class AssetsAudioPlayer {
           _playerState.add(playing ? PlayerState.play : PlayerState.pause);
           break;
         case METHOD_PLAY_AFTER_INTERRUPTION:
-          _playAfterInterruption.add(call.arguments);
+          final int reason = call.arguments;
+          print('METHOD_PLAY_AFTER_INTERRUPTION');
+          print(reason);
+          _playAfterInterruption.add(reason);
           break;
         case METHOD_VOLUME:
           _volume.add(call.arguments);
@@ -829,6 +834,7 @@ class AssetsAudioPlayer {
         audioFocusStrategy: _playlist!.audioFocusStrategy,
         seek: seek,
         needRecord: _playlist!.needRecord,
+        playStream: _playlist!.playStream,
       );
     }
   }
@@ -1024,6 +1030,7 @@ class AssetsAudioPlayer {
     AudioFocusStrategy? audioFocusStrategy,
     NotificationSettings? notificationSettings,
     bool? needRecord = false,
+    bool? playStream = false,
   }) async {
     final _autoStart = autoStart ?? _DEFAULT_AUTO_START;
     final _loopMode = loopMode ?? _DEFAULT_LOOP_MODE;
@@ -1043,6 +1050,7 @@ class AssetsAudioPlayer {
         final params = {
           'id': id,
           'needRecord': needRecord,
+          'playStream': playStream,
           'audioType': audioTypeDescription(audio.audioType),
           'path': audio.path,
           'autoStart': _autoStart,
@@ -1142,6 +1150,7 @@ class AssetsAudioPlayer {
     HeadPhoneStrategy headPhoneStrategy = _DEFAULT_HEADPHONE_STRATEGY,
     AudioFocusStrategy? audioFocusStrategy,
     bool? needRecord,
+    bool? playStream,
   }) async {
     _lastSeek = null;
     _replaceRealtimeSubscription();
@@ -1157,6 +1166,7 @@ class AssetsAudioPlayer {
       playInBackground: playInBackground ?? _DEFAULT_PLAY_IN_BACKGROUND,
       headPhoneStrategy: headPhoneStrategy,
       needRecord: needRecord,
+      playStream: playStream,
     );
     _updatePlaylistIndexes();
     _playlist!.moveTo(playlist.startIndex);
@@ -1198,6 +1208,7 @@ class AssetsAudioPlayer {
     AudioFocusStrategy? audioFocusStrategy,
     bool forceOpen = false, // skip the _acceptUserOpen
     bool needRecord = false,
+    bool playStream = false,
   }) async {
     final focusStrategy = audioFocusStrategy ?? defaultFocusStrategy;
 
@@ -1234,6 +1245,7 @@ class AssetsAudioPlayer {
               notificationSettings ?? defaultNotificationSettings,
           playInBackground: playInBackground,
           needRecord: needRecord,
+          playStream: playStream,
         );
       }
       _acceptUserOpen = true;
@@ -1486,6 +1498,7 @@ class _CurrentPlaylist {
   final PlayInBackground? playInBackground;
   final HeadPhoneStrategy? headPhoneStrategy;
   final bool? needRecord;
+  final bool? playStream;
 
   int playlistIndex = 0;
 
@@ -1588,6 +1601,7 @@ class _CurrentPlaylist {
     this.headPhoneStrategy,
     this.audioFocusStrategy,
     this.needRecord,
+    this.playStream,
   });
 
   void returnToFirst() {
