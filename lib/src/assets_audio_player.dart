@@ -11,7 +11,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:rxdart/subjects.dart';
 import 'package:uuid/uuid.dart';
 
 import 'applifecycle.dart';
@@ -54,6 +53,7 @@ const String METHOD_PLAY_SPEED = 'player.playSpeed';
 const String METHOD_PITCH = 'player.pitch';
 const String METHOD_ERROR = 'player.error';
 const String METHOD_AUDIO_SESSION_ID = 'player.audioSessionId';
+const String METHOD_PLAY_AFTER_INTERRUPTION = 'player.afterInterruption';
 
 enum PlayerState {
   play,
@@ -238,6 +238,7 @@ class AssetsAudioPlayer {
     Duration? seek,
     double? playSpeed,
     bool needRecord = false,
+    bool playStream = false,
   }) {
     final player = AssetsAudioPlayer.newPlayer();
     StreamSubscription? onFinished;
@@ -255,6 +256,7 @@ class AssetsAudioPlayer {
       autoStart: true,
       playSpeed: playSpeed,
       needRecord: needRecord,
+      playStream: playStream,
     );
   }
 
@@ -290,19 +292,19 @@ class AssetsAudioPlayer {
   ValueStream<bool> get isPlaying => _isPlaying.stream;
 
   String get getCurrentAudioTitle =>
-      _current.value?.audio.audio.metas.title ?? '';
+      _current.valueOrNull?.audio.audio.metas.title ?? '';
 
   String get getCurrentAudioArtist =>
-      _current.value?.audio.audio.metas.artist ?? '';
+      _current.valueOrNull?.audio.audio.metas.artist ?? '';
 
   Map<String, dynamic> get getCurrentAudioextra =>
-      _current.value?.audio.audio.metas.extra ?? <String, dynamic>{};
+      _current.valueOrNull?.audio.audio.metas.extra ?? <String, dynamic>{};
 
   String get getCurrentAudioAlbum =>
-      _current.value?.audio.audio.metas.album ?? '';
+      _current.valueOrNull?.audio.audio.metas.album ?? '';
 
   MetasImage? get getCurrentAudioImage =>
-      _current.value?.audio.audio.metas.image;
+      _current.valueOrNull?.audio.audio.metas.image;
 
   /// represent the android session id
   /// does nothing on others platforms
@@ -314,6 +316,11 @@ class AssetsAudioPlayer {
       BehaviorSubject<PlayerState>.seeded(PlayerState.stop);
 
   ValueStream<PlayerState> get playerState => _playerState.stream;
+
+  ValueStream<int> get playAfterInterruption => _playAfterInterruption.stream;
+
+  final BehaviorSubject<int> _playAfterInterruption =
+      BehaviorSubject<int>.seeded(0);
 
   /// Then mediaplayer playing audio (mutable)
   final BehaviorSubject<Playing?> _current = BehaviorSubject();
@@ -628,6 +635,12 @@ class AssetsAudioPlayer {
           _isPlaying.add(playing);
           _playerState.add(playing ? PlayerState.play : PlayerState.pause);
           break;
+        case METHOD_PLAY_AFTER_INTERRUPTION:
+          final int reason = call.arguments;
+          print('METHOD_PLAY_AFTER_INTERRUPTION');
+          print(reason);
+          _playAfterInterruption.add(reason);
+          break;
         case METHOD_VOLUME:
           _volume.add(call.arguments);
           break;
@@ -832,6 +845,7 @@ class AssetsAudioPlayer {
         audioFocusStrategy: _playlist!.audioFocusStrategy,
         seek: seek,
         needRecord: _playlist!.needRecord,
+        playStream: _playlist!.playStream,
       );
     }
   }
@@ -1024,7 +1038,8 @@ class AssetsAudioPlayer {
     required HeadPhoneStrategy? headPhoneStrategy,
     required AudioFocusStrategy? audioFocusStrategy,
     required NotificationSettings? notificationSettings,
-    required bool? needRecord,
+    bool? needRecord = false,
+    bool? playStream = false,
   }) async {
     final _autoStart = autoStart ?? _DEFAULT_AUTO_START;
     final _loopMode = loopMode ?? _DEFAULT_LOOP_MODE;
@@ -1044,6 +1059,7 @@ class AssetsAudioPlayer {
         final params = {
           'id': id,
           'needRecord': needRecord,
+          'playStream': playStream,
           'audioType': audioTypeDescription(audio.audioType),
           'path': audio.path,
           'autoStart': _autoStart,
@@ -1154,7 +1170,8 @@ class AssetsAudioPlayer {
     PlayInBackground? playInBackground,
     HeadPhoneStrategy headPhoneStrategy = _DEFAULT_HEADPHONE_STRATEGY,
     AudioFocusStrategy? audioFocusStrategy,
-    bool needRecord = true,
+    bool? needRecord,
+    bool? playStream,
   }) async {
     _lastSeek = null;
     _replaceRealtimeSubscription();
@@ -1171,6 +1188,7 @@ class AssetsAudioPlayer {
       playInBackground: playInBackground ?? _DEFAULT_PLAY_IN_BACKGROUND,
       headPhoneStrategy: headPhoneStrategy,
       needRecord: needRecord,
+      playStream: playStream,
     );
     _updatePlaylistIndexes();
     _playlist!.moveTo(playlist.startIndex);
@@ -1213,6 +1231,7 @@ class AssetsAudioPlayer {
     AudioFocusStrategy? audioFocusStrategy,
     bool forceOpen = false, // skip the _acceptUserOpen
     bool needRecord = false,
+    bool playStream = false,
   }) async {
     final focusStrategy = audioFocusStrategy ?? defaultFocusStrategy;
 
@@ -1234,21 +1253,24 @@ class AssetsAudioPlayer {
       }
 
       if (playlist != null) {
-        await _openPlaylist(playlist,
-            autoStart: autoStart,
-            volume: volume,
-            respectSilentMode: respectSilentMode,
-            showNotification: showNotification,
-            seek: seek,
-            loopMode: loopMode,
-            playSpeed: playSpeed,
-            pitch: pitch,
-            headPhoneStrategy: headPhoneStrategy,
-            audioFocusStrategy: focusStrategy,
-            notificationSettings:
-                notificationSettings ?? defaultNotificationSettings,
-            playInBackground: playInBackground,
-            needRecord: needRecord);
+        await _openPlaylist(
+          playlist,
+          autoStart: autoStart,
+          volume: volume,
+          respectSilentMode: respectSilentMode,
+          showNotification: showNotification,
+          seek: seek,
+          loopMode: loopMode,
+          playSpeed: playSpeed,
+          pitch: pitch,
+          headPhoneStrategy: headPhoneStrategy,
+          audioFocusStrategy: focusStrategy,
+          notificationSettings:
+              notificationSettings ?? defaultNotificationSettings,
+          playInBackground: playInBackground,
+          needRecord: needRecord,
+          playStream: playStream,
+        );
       }
       _acceptUserOpen = true;
     } catch (t) {
@@ -1516,6 +1538,7 @@ class _CurrentPlaylist {
   final PlayInBackground? playInBackground;
   final HeadPhoneStrategy? headPhoneStrategy;
   final bool? needRecord;
+  final bool? playStream;
 
   int playlistIndex = 0;
 
@@ -1619,6 +1642,7 @@ class _CurrentPlaylist {
     this.headPhoneStrategy,
     this.audioFocusStrategy,
     this.needRecord,
+    this.playStream,
   });
 
   void returnToFirst() {
