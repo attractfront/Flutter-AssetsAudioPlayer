@@ -1460,6 +1460,9 @@ class Music : NSObject, FlutterPlugin {
                 let respectSilentMode = args["respectSilentMode"] as? Bool ?? false
                 let displayNotification = args["displayNotification"] as? Bool ?? false
                 
+                let needRecord = args["needRecord"] as? Bool ?? false
+                let playStream = args["playStream"] as? Bool ?? false
+                
                 let audioMetas = fetchAudioMetas(from: args)
                 
                 let notifSettings = notificationSettings(from: args)
@@ -1481,7 +1484,9 @@ class Music : NSObject, FlutterPlugin {
                         audioFocusStrategy: audioFocusStrategy,
                         playSpeed: playSpeed,
                         networkHeaders: networkHeaders,
-                        result: result
+                        result: result,
+                        needRecord: needRecord,
+                        playStream: playStream
                 )
                 
             default:
