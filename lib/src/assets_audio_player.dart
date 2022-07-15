@@ -235,8 +235,8 @@ class AssetsAudioPlayer {
     Duration? seek,
     double? playSpeed,
     bool needRecord = false,
-    bool mixWithOthers = false,
     bool playStream = false,
+    bool mixWithOthers = false,
   }) {
     final player = AssetsAudioPlayer.newPlayer();
     StreamSubscription? onFinished;
@@ -254,8 +254,8 @@ class AssetsAudioPlayer {
       autoStart: true,
       playSpeed: playSpeed,
       needRecord: needRecord,
-      mixWithOthers: mixWithOthers,
       playStream: playStream,
+      mixWithOthers: mixWithOthers,
     );
   }
 
@@ -836,8 +836,8 @@ class AssetsAudioPlayer {
         audioFocusStrategy: _playlist!.audioFocusStrategy,
         seek: seek,
         needRecord: _playlist!.needRecord,
-        mixWithOthers: _playlist?.mixWithOthers ?? false,
         playStream: _playlist!.playStream,
+        mixWithOthers: _playlist?.mixWithOthers ?? false,
       );
     }
   }
@@ -1033,8 +1033,8 @@ class AssetsAudioPlayer {
     AudioFocusStrategy? audioFocusStrategy,
     NotificationSettings? notificationSettings,
     bool? needRecord = false,
-    bool? mixWithOthers = false,
     bool? playStream = false,
+    bool? mixWithOthers = false,
   }) async {
     final _autoStart = autoStart ?? _DEFAULT_AUTO_START;
     final _loopMode = loopMode ?? _DEFAULT_LOOP_MODE;
@@ -1054,8 +1054,8 @@ class AssetsAudioPlayer {
         final params = {
           'id': id,
           'needRecord': needRecord,
-          'mixWithOthers': mixWithOthers,
           'playStream': playStream,
+          'mixWithOthers': mixWithOthers,
           'audioType': audioTypeDescription(audio.audioType),
           'path': audio.path,
           'autoStart': _autoStart,
@@ -1155,8 +1155,8 @@ class AssetsAudioPlayer {
     HeadPhoneStrategy headPhoneStrategy = _DEFAULT_HEADPHONE_STRATEGY,
     AudioFocusStrategy? audioFocusStrategy,
     bool? needRecord,
-    bool? mixWithOthers,
     bool? playStream,
+    bool? mixWithOthers,
   }) async {
     _lastSeek = null;
     _replaceRealtimeSubscription();
@@ -1172,8 +1172,8 @@ class AssetsAudioPlayer {
       playInBackground: playInBackground ?? _DEFAULT_PLAY_IN_BACKGROUND,
       headPhoneStrategy: headPhoneStrategy,
       needRecord: needRecord,
-      mixWithOthers: mixWithOthers,
       playStream: playStream,
+      mixWithOthers: mixWithOthers,
     );
     _updatePlaylistIndexes();
     _playlist!.moveTo(playlist.startIndex);
@@ -1200,6 +1200,12 @@ class AssetsAudioPlayer {
   ///       assets:
   ///         - assets/audios/
   ///
+  /// If you set [mixWithOthers] to [true] it will setup settighs to following:
+  /// AVAudioSession.Category.playAndRecord
+  /// AVAudioSession.Mode.videoRecording
+  /// AVAudioSession.CategoryOptions.mixWithOthers)
+  ///
+  /// And it will ovveride [needRecord] and [playStream]
   Future<void> open(
     Playable playable, {
     bool autoStart = _DEFAULT_AUTO_START,
@@ -1215,8 +1221,8 @@ class AssetsAudioPlayer {
     AudioFocusStrategy? audioFocusStrategy,
     bool forceOpen = false, // skip the _acceptUserOpen
     bool needRecord = false,
-    bool mixWithOthers = false,
     bool playStream = false,
+    bool mixWithOthers = false,
   }) async {
     final focusStrategy = audioFocusStrategy ?? defaultFocusStrategy;
 
@@ -1253,8 +1259,8 @@ class AssetsAudioPlayer {
               notificationSettings ?? defaultNotificationSettings,
           playInBackground: playInBackground,
           needRecord: needRecord,
-          mixWithOthers: mixWithOthers,
           playStream: playStream,
+          mixWithOthers: mixWithOthers,
         );
       }
       _acceptUserOpen = true;
@@ -1507,8 +1513,8 @@ class _CurrentPlaylist {
   final PlayInBackground? playInBackground;
   final HeadPhoneStrategy? headPhoneStrategy;
   final bool? needRecord;
-  final bool? mixWithOthers;
   final bool? playStream;
+  final bool? mixWithOthers;
 
   int playlistIndex = 0;
 
@@ -1611,8 +1617,8 @@ class _CurrentPlaylist {
     this.headPhoneStrategy,
     this.audioFocusStrategy,
     this.needRecord,
-    this.mixWithOthers,
     this.playStream,
+    this.mixWithOthers,
   });
 
   void returnToFirst() {
