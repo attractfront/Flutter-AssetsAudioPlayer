@@ -1201,11 +1201,14 @@ class AssetsAudioPlayer {
   ///         - assets/audios/
   ///
   /// If you set [mixWithOthers] to [true] it will setup settighs to following:
-  /// AVAudioSession.Category.playAndRecord
-  /// AVAudioSession.Mode.videoRecording
-  /// AVAudioSession.CategoryOptions.mixWithOthers)
   ///
-  /// And it will ovveride [needRecord] and [playStream]
+  /// AVAudioSession.Category.playAndRecord
+  ///
+  /// AVAudioSession.Mode.videoRecording
+  ///
+  /// AVAudioSession.CategoryOptions.mixWithOthers
+  ///
+  /// And it will ovveride [needRecord] and [playStream] parameters.
   Future<void> open(
     Playable playable, {
     bool autoStart = _DEFAULT_AUTO_START,
