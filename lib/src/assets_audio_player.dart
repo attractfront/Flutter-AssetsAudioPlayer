@@ -235,6 +235,7 @@ class AssetsAudioPlayer {
     Duration? seek,
     double? playSpeed,
     bool needRecord = false,
+    bool mixWithOthers = false,
     bool playStream = false,
   }) {
     final player = AssetsAudioPlayer.newPlayer();
@@ -253,6 +254,7 @@ class AssetsAudioPlayer {
       autoStart: true,
       playSpeed: playSpeed,
       needRecord: needRecord,
+      mixWithOthers: mixWithOthers,
       playStream: playStream,
     );
   }
@@ -834,6 +836,7 @@ class AssetsAudioPlayer {
         audioFocusStrategy: _playlist!.audioFocusStrategy,
         seek: seek,
         needRecord: _playlist!.needRecord,
+        mixWithOthers: _playlist?.mixWithOthers ?? false,
         playStream: _playlist!.playStream,
       );
     }
@@ -1030,6 +1033,7 @@ class AssetsAudioPlayer {
     AudioFocusStrategy? audioFocusStrategy,
     NotificationSettings? notificationSettings,
     bool? needRecord = false,
+    bool? mixWithOthers = false,
     bool? playStream = false,
   }) async {
     final _autoStart = autoStart ?? _DEFAULT_AUTO_START;
@@ -1050,6 +1054,7 @@ class AssetsAudioPlayer {
         final params = {
           'id': id,
           'needRecord': needRecord,
+          'mixWithOthers': mixWithOthers,
           'playStream': playStream,
           'audioType': audioTypeDescription(audio.audioType),
           'path': audio.path,
@@ -1150,6 +1155,7 @@ class AssetsAudioPlayer {
     HeadPhoneStrategy headPhoneStrategy = _DEFAULT_HEADPHONE_STRATEGY,
     AudioFocusStrategy? audioFocusStrategy,
     bool? needRecord,
+    bool? mixWithOthers,
     bool? playStream,
   }) async {
     _lastSeek = null;
@@ -1166,6 +1172,7 @@ class AssetsAudioPlayer {
       playInBackground: playInBackground ?? _DEFAULT_PLAY_IN_BACKGROUND,
       headPhoneStrategy: headPhoneStrategy,
       needRecord: needRecord,
+      mixWithOthers: mixWithOthers,
       playStream: playStream,
     );
     _updatePlaylistIndexes();
@@ -1208,6 +1215,7 @@ class AssetsAudioPlayer {
     AudioFocusStrategy? audioFocusStrategy,
     bool forceOpen = false, // skip the _acceptUserOpen
     bool needRecord = false,
+    bool mixWithOthers = false,
     bool playStream = false,
   }) async {
     final focusStrategy = audioFocusStrategy ?? defaultFocusStrategy;
@@ -1245,6 +1253,7 @@ class AssetsAudioPlayer {
               notificationSettings ?? defaultNotificationSettings,
           playInBackground: playInBackground,
           needRecord: needRecord,
+          mixWithOthers: mixWithOthers,
           playStream: playStream,
         );
       }
@@ -1498,6 +1507,7 @@ class _CurrentPlaylist {
   final PlayInBackground? playInBackground;
   final HeadPhoneStrategy? headPhoneStrategy;
   final bool? needRecord;
+  final bool? mixWithOthers;
   final bool? playStream;
 
   int playlistIndex = 0;
@@ -1601,6 +1611,7 @@ class _CurrentPlaylist {
     this.headPhoneStrategy,
     this.audioFocusStrategy,
     this.needRecord,
+    this.mixWithOthers,
     this.playStream,
   });
 
