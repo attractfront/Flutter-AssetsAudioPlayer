@@ -657,7 +657,6 @@ public class Player : NSObject, AVAudioPlayerDelegate {
                 debugPrint("play music")
                 debugPrint(AVAudioSession.sharedInstance().category)
                 debugPrint(AVAudioSession.sharedInstance().mode)
-                debugPrint(AVAudioSession.sharedInstance().options)
             }
         } catch (_){ }
         #endif
