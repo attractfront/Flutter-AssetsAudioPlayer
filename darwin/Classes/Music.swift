@@ -640,7 +640,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
                 category =  AVAudioSession.Category.playAndRecord
                 mode = AVAudioSession.Mode.voiceChat
             }
-            if (mixWithOthers) {
+            if (mixWithOthers && !headphonesConnected) {
                 category = AVAudioSession.Category.playAndRecord
                 mode = AVAudioSession.Mode.videoRecording
                 options = [AVAudioSession.CategoryOptions.mixWithOthers]
