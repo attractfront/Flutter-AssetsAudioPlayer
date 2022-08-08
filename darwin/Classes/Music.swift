@@ -499,7 +499,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
         }
 
         do {
-            setupCategories()
+            //setupCategories()
 
             var item : SlowMoPlayerItem
             if networkHeaders != nil && networkHeaders!.count > 0 {
@@ -624,6 +624,9 @@ public class Player : NSObject, AVAudioPlayerDelegate {
 
     func setupCategories(){
         #if os(iOS)
+        if (needRecord){
+            return
+        }
         do{
             let session = AVAudioSession.sharedInstance()
             let headphonesConnected = playStream ? session.currentRoute.outputs.filter({
@@ -660,7 +663,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
                 return
         }
         // Switch over the route change reason.
-
+        changeSpeaker()
         print("reason")
         print(reason)
         switch reason {
@@ -902,11 +905,27 @@ public class Player : NSObject, AVAudioPlayerDelegate {
             self.player?.play()
             self.player?.rate = self.rate
         }
+        changeSpeaker()
         self.currentTimeTimer = Timer.scheduledTimer(timeInterval: 0.3, target: self, selector: #selector(updateTimer), userInfo: nil, repeats: true)
         self.currentTimeTimer?.fire()
-//        self.playing = true
+    }
 
-        //self.updateNotifStatus(playing: self.playing, stopped: false, rate: self.player?.rate)
+    func changeSpeaker(){
+        let session = AVAudioSession.sharedInstance()
+        let headphonesConnected = playStream ? session.currentRoute.outputs.filter({
+            $0.portType == .builtInSpeaker
+        }).isEmpty : false
+        if (needRecord && !headphonesConnected){
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [self] in
+              do {
+                print("change speaker")
+                try session.overrideOutputAudioPort(AVAudioSession.PortOverride.speaker)
+                try session.setActive(true)
+              } catch let error as NSError {
+                  print(error.description)
+              }
+            }
+        }
     }
 
     private var looper: Any?
@@ -992,7 +1011,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
     @objc public func playerDidFinishPlaying(note: NSNotification){
         if(self._loopSingleAudio){
             self.player?.seek(to: CMTime.zero)
-            self.player?.play()
+//             self.player?.play()
         } else {
             playing = false
             self.channel.invokeMethod(Music.METHOD_FINISHED, arguments: true)
@@ -1133,8 +1152,8 @@ class Music : NSObject, FlutterPlugin {
                     )
                     break
                 }
-                self.getOrCreatePlayer(id: id)
-                    .play()
+//                 self.getOrCreatePlayer(id: id)
+//                     .play()
                 result(true)
 
             case "pause" :
