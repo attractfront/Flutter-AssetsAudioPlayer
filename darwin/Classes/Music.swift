@@ -499,7 +499,8 @@ public class Player : NSObject, AVAudioPlayerDelegate {
         }
 
         do {
-            //setupCategories()
+            self.player = nil
+            setupCategories()
 
             var item : SlowMoPlayerItem
             if networkHeaders != nil && networkHeaders!.count > 0 {
@@ -624,9 +625,6 @@ public class Player : NSObject, AVAudioPlayerDelegate {
 
     func setupCategories(){
         #if os(iOS)
-        if (needRecord){
-            return
-        }
         do{
             let session = AVAudioSession.sharedInstance()
             let headphonesConnected = playStream ? session.currentRoute.outputs.filter({
@@ -636,9 +634,9 @@ public class Player : NSObject, AVAudioPlayerDelegate {
             var mode = AVAudioSession.Mode.moviePlayback
             if (needRecord || headphonesConnected){
                 category =  AVAudioSession.Category.playAndRecord
-                mode = AVAudioSession.Mode.voiceChat
+                mode = AVAudioSession.Mode.videoChat
             }
-            if (session.category != category){
+//             if (session.category != category){
                 /* set session category and mode with options */
                 if #available(iOS 10.0, *) {
                     try AVAudioSession.sharedInstance().setCategory(category, mode: mode, options: [])
@@ -651,7 +649,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
                 debugPrint("play music")
                 debugPrint(AVAudioSession.sharedInstance().category)
                 debugPrint(AVAudioSession.sharedInstance().mode)
-            }
+//             }
         } catch (_){ }
         #endif
     }
@@ -663,18 +661,18 @@ public class Player : NSObject, AVAudioPlayerDelegate {
                 return
         }
         // Switch over the route change reason.
-        changeSpeaker()
+       // changeSpeaker()
         print("reason")
         print(reason)
-        switch reason {
-
-        case .newDeviceAvailable: // New device found.
-            setupCategories()
-        case .oldDeviceUnavailable: // Old device removed.
-                setupCategories()
-
-        default: ()
-        }
+//         switch reason {
+//
+//         case .newDeviceAvailable: // New device found.
+//             setupCategories()
+//         case .oldDeviceUnavailable: // Old device removed.
+//                 setupCategories()
+//
+//         default: ()
+//         }
     }
 
     @objc func handleInterruption(_ notification: Notification) {
@@ -793,27 +791,6 @@ public class Player : NSObject, AVAudioPlayerDelegate {
     func getSecondsFromCMTime(_ time: CMTime) -> Double {
         return self.getMillisecondsFromCMTime(time) / 1000;
     }
-
-//    @objc func routeChange(_ notification: Notification) {
-//
-//        #if os(iOS)
-//        if(!self.audioFocusStrategy.request) {
-//            debugPrint("__routeChange__ self.audioFocusStrategy.request)");
-//            return
-//        }
-//        guard let userInfo = notification.userInfo else{
-//            debugPrint("__routeChange__ user info nil");
-//                return
-//        }
-//        print("__routeChange__ userInfo \(userInfo)")
-//        guard let reason = userInfo[AVAudioSessionRouteChangeReasonKey] as? UInt else{
-//            debugPrint("__routeChange__ reason nil");
-//                return
-//        }
-//        self.channel.invokeMethod(Music.METHOD_PLAY_AFTER_INTERRUPTION, arguments: [reason])
-//        debugPrint("__routeChange__ reason \(reason)")
-//        #endif
-//    }
 
     private func setBuffering(_ value: Bool){
         self.channel.invokeMethod(Music.METHOD_IS_BUFFERING, arguments: value)
@@ -1152,8 +1129,8 @@ class Music : NSObject, FlutterPlugin {
                     )
                     break
                 }
-//                 self.getOrCreatePlayer(id: id)
-//                     .play()
+                self.getOrCreatePlayer(id: id)
+                    .play()
                 result(true)
 
             case "pause" :
