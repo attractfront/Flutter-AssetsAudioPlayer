@@ -292,18 +292,6 @@ class AssetsAudioPlayer {
   ValueStream<bool> get isPlaying => _isPlaying.stream;
 
   String get getCurrentAudioTitle =>
-<<<<<<< HEAD
-      _current.value?.audio.audio.metas.title ?? '';
-
-  String get getCurrentAudioArtist =>
-      _current.value?.audio.audio.metas.artist ?? '';
-
-  Map<String, dynamic> get getCurrentAudioextra =>
-      _current.value?.audio.audio.metas.extra ?? <String, dynamic>{};
-
-  String get getCurrentAudioAlbum =>
-      _current.value?.audio.audio.metas.album ?? '';
-=======
       _current.valueOrNull?.audio.audio.metas.title ?? '';
 
   String get getCurrentAudioArtist =>
@@ -314,7 +302,6 @@ class AssetsAudioPlayer {
 
   String get getCurrentAudioAlbum =>
       _current.valueOrNull?.audio.audio.metas.album ?? '';
->>>>>>> my_branch
 
   MetasImage? get getCurrentAudioImage =>
       _current.valueOrNull?.audio.audio.metas.image;
@@ -329,11 +316,6 @@ class AssetsAudioPlayer {
       BehaviorSubject<PlayerState>.seeded(PlayerState.stop);
 
   ValueStream<PlayerState> get playerState => _playerState.stream;
-
-  ValueStream<int> get playAfterInterruption => _playAfterInterruption.stream;
-
-  final BehaviorSubject<int> _playAfterInterruption =
-      BehaviorSubject<int>.seeded(0);
 
   /// Then mediaplayer playing audio (mutable)
   final BehaviorSubject<Playing?> _current = BehaviorSubject();
@@ -1048,18 +1030,6 @@ class AssetsAudioPlayer {
   // private method, used in open(playlist) and open(path)
   Future<void> _open(
     Audio? audioInput, {
-<<<<<<< HEAD
-    bool? autoStart,
-    double? forcedVolume,
-    bool? respectSilentMode,
-    bool? showNotification,
-    Duration? seek,
-    double? playSpeed,
-    LoopMode? loopMode,
-    HeadPhoneStrategy? headPhoneStrategy,
-    AudioFocusStrategy? audioFocusStrategy,
-    NotificationSettings? notificationSettings,
-=======
     required bool? autoStart,
     required double? forcedVolume,
     required bool? respectSilentMode,
@@ -1071,7 +1041,6 @@ class AssetsAudioPlayer {
     required HeadPhoneStrategy? headPhoneStrategy,
     required AudioFocusStrategy? audioFocusStrategy,
     required NotificationSettings? notificationSettings,
->>>>>>> my_branch
     bool? needRecord = false,
     bool? playStream = false,
   }) async {
@@ -1320,12 +1289,8 @@ class AssetsAudioPlayer {
   ///     _assetsAudioPlayer.playOfPause();
   ///
   Future<void> playOrPause() async {
-<<<<<<< HEAD
     final playing = _isPlaying.value ?? true;
     print("__interaption__playing $playing");
-=======
-    final playing = _isPlaying.valueOrNull ?? true;
->>>>>>> my_branch
     if (playing) {
       await pause();
     } else {
