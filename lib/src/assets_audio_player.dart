@@ -11,7 +11,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:rxdart/subjects.dart';
 import 'package:uuid/uuid.dart';
 
 import 'applifecycle.dart';
@@ -51,6 +50,7 @@ const String METHOD_NOTIFICATION_PREV = 'player.prev';
 const String METHOD_NOTIFICATION_STOP = 'player.stop';
 const String METHOD_NOTIFICATION_PLAY_OR_PAUSE = 'player.playOrPause';
 const String METHOD_PLAY_SPEED = 'player.playSpeed';
+const String METHOD_PITCH = 'player.pitch';
 const String METHOD_ERROR = 'player.error';
 const String METHOD_AUDIO_SESSION_ID = 'player.audioSessionId';
 const String METHOD_PLAY_AFTER_INTERRUPTION = 'player.afterInterruption';
@@ -91,8 +91,8 @@ class PlayerEditor {
   void onAudioReplacedAt(int index, bool keepPlayingPositionIfCurrent) {
     assetsAudioPlayer._updatePlaylistIndexes();
     if (assetsAudioPlayer._playlist!.playlistIndex == index) {
-      final currentPosition = assetsAudioPlayer.currentPosition.value;
-      final isPlaying = assetsAudioPlayer.isPlaying.value ?? false;
+      final currentPosition = assetsAudioPlayer.currentPosition.valueOrNull;
+      final isPlaying = assetsAudioPlayer.isPlaying.valueOrNull ?? false;
       //print('onAudioReplacedAt/ currentPosition : $currentPosition');
       if (keepPlayingPositionIfCurrent && currentPosition != null) {
         assetsAudioPlayer._openPlaylistCurrent(
@@ -133,6 +133,9 @@ class AssetsAudioPlayer {
   static final double maxPlaySpeed = 16.0;
   static final double defaultVolume = maxVolume;
   static final double defaultPlaySpeed = 1.0;
+  static final double minPitch = 0.0;
+  static final double maxPitch = 16.0;
+  static final double defaultPitch = 1.0;
   static final AudioFocusStrategy defaultFocusStrategy =
       AudioFocusStrategy.request(resumeAfterInterruption: true);
   static final NotificationSettings defaultNotificationSettings =
@@ -289,6 +292,7 @@ class AssetsAudioPlayer {
   ValueStream<bool> get isPlaying => _isPlaying.stream;
 
   String get getCurrentAudioTitle =>
+<<<<<<< HEAD
       _current.value?.audio.audio.metas.title ?? '';
 
   String get getCurrentAudioArtist =>
@@ -299,9 +303,21 @@ class AssetsAudioPlayer {
 
   String get getCurrentAudioAlbum =>
       _current.value?.audio.audio.metas.album ?? '';
+=======
+      _current.valueOrNull?.audio.audio.metas.title ?? '';
+
+  String get getCurrentAudioArtist =>
+      _current.valueOrNull?.audio.audio.metas.artist ?? '';
+
+  Map<String, dynamic> get getCurrentAudioextra =>
+      _current.valueOrNull?.audio.audio.metas.extra ?? <String, dynamic>{};
+
+  String get getCurrentAudioAlbum =>
+      _current.valueOrNull?.audio.audio.metas.album ?? '';
+>>>>>>> my_branch
 
   MetasImage? get getCurrentAudioImage =>
-      _current.value?.audio.audio.metas.image;
+      _current.valueOrNull?.audio.audio.metas.image;
 
   /// represent the android session id
   /// does nothing on others platforms
@@ -313,6 +329,11 @@ class AssetsAudioPlayer {
       BehaviorSubject<PlayerState>.seeded(PlayerState.stop);
 
   ValueStream<PlayerState> get playerState => _playerState.stream;
+
+  ValueStream<int> get playAfterInterruption => _playAfterInterruption.stream;
+
+  final BehaviorSubject<int> _playAfterInterruption =
+      BehaviorSubject<int>.seeded(0);
 
   /// Then mediaplayer playing audio (mutable)
   final BehaviorSubject<Playing?> _current = BehaviorSubject();
@@ -427,6 +448,10 @@ class AssetsAudioPlayer {
 
   ValueStream<double> get playSpeed => _playSpeed.stream;
 
+  final BehaviorSubject<double> _pitch = BehaviorSubject.seeded(1.0);
+
+  ValueStream<double> get pitch => _pitch.stream;
+
   final BehaviorSubject<double> _forwardRewindSpeed = BehaviorSubject.seeded(0);
 
   ValueStream<double> get forwardRewindSpeed => _forwardRewindSpeed.stream;
@@ -436,7 +461,7 @@ class AssetsAudioPlayer {
   /// returns the looping state : true -> looping, false -> not looping
   LoopMode? get currentLoopMode => _loopMode.value;
 
-  bool get shuffle => _shuffle.value ?? false;
+  bool get shuffle => _shuffle.valueOrNull ?? false;
 
   bool _stopped = false;
 
@@ -580,7 +605,7 @@ class AssetsAudioPlayer {
           break;
         case METHOD_CURRENT:
           if (call.arguments == null) {
-            final current = _current.value;
+            final current = _current.valueOrNull;
             if (current != null) {
               final finishedPlay = Playing(
                 audio: current.audio,
@@ -643,6 +668,9 @@ class AssetsAudioPlayer {
         case METHOD_PLAY_SPEED:
           _playSpeed.add(call.arguments);
           break;
+        case METHOD_PITCH:
+          _pitch.add(call.arguments);
+          break;
         case METHOD_FORWARD_REWIND_SPEED:
           final double newValue = call.arguments;
           if (_forwardRewindSpeed.value != newValue) {
@@ -677,7 +705,7 @@ class AssetsAudioPlayer {
             pause();
             break;
           case PlayInBackground.disabledRestoreOnForeground:
-            _wasPlayingBeforeEnterBackground = isPlaying.value ?? false;
+            _wasPlayingBeforeEnterBackground = isPlaying.valueOrNull ?? false;
             pause();
             break;
         }
@@ -751,8 +779,8 @@ class AssetsAudioPlayer {
   Future<bool> previous({bool keepLoopMode = true}) async {
     if (_playlist != null) {
       // more than 5 sec played, go back to the start of audio
-      if (_currentPosition.value != null &&
-          _currentPosition.value!.inSeconds >= 5) {
+      if (_currentPosition.valueOrNull != null &&
+          _currentPosition.valueOrNull!.inSeconds >= 5) {
         await seek(Duration.zero, force: true);
       } else if (_playlist!.hasPrev()) {
         if (!keepLoopMode) {
@@ -773,7 +801,7 @@ class AssetsAudioPlayer {
   }
 
   void _onPositionReceived(dynamic argument) {
-    final oldValue = _currentPosition.value;
+    final oldValue = _currentPosition.valueOrNull;
     int? newValue;
     if (argument is int) {
       final value = argument;
@@ -827,6 +855,7 @@ class AssetsAudioPlayer {
         respectSilentMode: _playlist!.respectSilentMode,
         showNotification: _playlist!.showNotification,
         playSpeed: _playlist!.playSpeed,
+        pitch: _playlist!.pitch,
         notificationSettings: _playlist!.notificationSettings,
         autoStart: autoStart,
         loopMode: _playlist!.loopMode,
@@ -871,7 +900,7 @@ class AssetsAudioPlayer {
         }
       }
       if (_playlist!.hasNext()) {
-        final curr = _current.value;
+        final curr = _current.valueOrNull;
         if (curr != null) {
           _playlistAudioFinished.add(Playing(
             audio: curr.audio,
@@ -886,7 +915,7 @@ class AssetsAudioPlayer {
         return true;
       } else if (loopMode.value == LoopMode.playlist) {
         //last element
-        final curr = _current.value;
+        final curr = _current.valueOrNull;
         if (curr != null) {
           _playlistAudioFinished.add(Playing(
             audio: curr.audio,
@@ -905,7 +934,7 @@ class AssetsAudioPlayer {
         return true;
       } else if (requestByUser) {
         //last element
-        final curr = _current.value;
+        final curr = _current.valueOrNull;
         if (curr != null) {
           _playlistAudioFinished.add(Playing(
             audio: curr.audio,
@@ -1019,6 +1048,7 @@ class AssetsAudioPlayer {
   // private method, used in open(playlist) and open(path)
   Future<void> _open(
     Audio? audioInput, {
+<<<<<<< HEAD
     bool? autoStart,
     double? forcedVolume,
     bool? respectSilentMode,
@@ -1029,6 +1059,19 @@ class AssetsAudioPlayer {
     HeadPhoneStrategy? headPhoneStrategy,
     AudioFocusStrategy? audioFocusStrategy,
     NotificationSettings? notificationSettings,
+=======
+    required bool? autoStart,
+    required double? forcedVolume,
+    required bool? respectSilentMode,
+    required bool? showNotification,
+    required Duration? seek,
+    required double? playSpeed,
+    required double? pitch,
+    required LoopMode? loopMode,
+    required HeadPhoneStrategy? headPhoneStrategy,
+    required AudioFocusStrategy? audioFocusStrategy,
+    required NotificationSettings? notificationSettings,
+>>>>>>> my_branch
     bool? needRecord = false,
     bool? playStream = false,
   }) async {
@@ -1058,11 +1101,13 @@ class AssetsAudioPlayer {
           'headPhoneStrategy': describeHeadPhoneStrategy(_headPhoneStrategy),
           'audioFocusStrategy': describeAudioFocusStrategy(_audioFocusStrategy),
           'displayNotification': _showNotification,
-          'volume': forcedVolume ?? volume.value ?? defaultVolume,
+          'volume': forcedVolume ?? volume.valueOrNull ?? defaultVolume,
           'playSpeed': playSpeed ??
               audio.playSpeed ??
-              this.playSpeed.value ??
+              this.playSpeed.valueOrNull ??
               defaultPlaySpeed,
+          'pitch':
+              pitch ?? audio.pitch ?? this.pitch.valueOrNull ?? defaultPitch,
         };
         if (seek != null) {
           params['seek'] = seek.inMilliseconds.round();
@@ -1075,6 +1120,15 @@ class AssetsAudioPlayer {
             audio.audioType == AudioType.liveStream) {
           params['networkHeaders'] =
               audio.networkHeaders ?? networkSettings.defaultHeaders;
+        }
+
+        if (audio.drmConfiguration != null) {
+          var drmMap = {};
+          drmMap['drmType'] = audio.drmConfiguration!.drmType.toString();
+          if (audio.drmConfiguration!.drmType == DrmType.clearKey) {
+            drmMap['clearKey'] = audio.drmConfiguration!.clearKey;
+          }
+          params['drmConfiguration'] = drmMap;
         }
 
         //region notifs
@@ -1144,6 +1198,7 @@ class AssetsAudioPlayer {
     bool showNotification = _DEFAULT_SHOW_NOTIFICATION,
     Duration? seek,
     double? playSpeed,
+    double? pitch,
     LoopMode? loopMode,
     NotificationSettings? notificationSettings,
     PlayInBackground? playInBackground,
@@ -1160,6 +1215,7 @@ class AssetsAudioPlayer {
       respectSilentMode: respectSilentMode,
       showNotification: showNotification,
       playSpeed: playSpeed,
+      pitch: pitch,
       loopMode: loopMode,
       audioFocusStrategy: audioFocusStrategy ?? defaultFocusStrategy,
       notificationSettings: notificationSettings,
@@ -1201,6 +1257,7 @@ class AssetsAudioPlayer {
     bool showNotification = _DEFAULT_SHOW_NOTIFICATION,
     Duration? seek,
     double? playSpeed,
+    double? pitch,
     NotificationSettings? notificationSettings,
     LoopMode loopMode = _DEFAULT_LOOP_MODE,
     PlayInBackground playInBackground = _DEFAULT_PLAY_IN_BACKGROUND,
@@ -1239,6 +1296,7 @@ class AssetsAudioPlayer {
           seek: seek,
           loopMode: loopMode,
           playSpeed: playSpeed,
+          pitch: pitch,
           headPhoneStrategy: headPhoneStrategy,
           audioFocusStrategy: focusStrategy,
           notificationSettings:
@@ -1262,8 +1320,12 @@ class AssetsAudioPlayer {
   ///     _assetsAudioPlayer.playOfPause();
   ///
   Future<void> playOrPause() async {
+<<<<<<< HEAD
     final playing = _isPlaying.value ?? true;
     print("__interaption__playing $playing");
+=======
+    final playing = _isPlaying.valueOrNull ?? true;
+>>>>>>> my_branch
     if (playing) {
       await pause();
     } else {
@@ -1367,11 +1429,11 @@ class AssetsAudioPlayer {
   ///
   Future<void> seekBy(Duration by) async {
     // only if playing a song
-    final playing = current.value;
+    final playing = current.valueOrNull;
     if (playing != null) {
       final totalDuration = playing.audio.duration;
 
-      final currentPosition = this.currentPosition.value ?? Duration();
+      final currentPosition = this.currentPosition.valueOrNull ?? Duration();
 
       if (by.inMilliseconds >= 0) {
         final nextPosition = currentPosition + by;
@@ -1385,7 +1447,7 @@ class AssetsAudioPlayer {
         await seek(currentPositionCapped);
       } else {
         // only if playing a song
-        final currentPosition = this.currentPosition.value ?? Duration();
+        final currentPosition = this.currentPosition.valueOrNull ?? Duration();
         final nextPosition = currentPosition + by;
 
         // don't seek less that 0
@@ -1441,6 +1503,22 @@ class AssetsAudioPlayer {
     });
   }
 
+  /// Change the current pitch of the MediaPlayer
+  ///
+  ///     _assetsAudioPlayer.setPitch(0.4);
+  ///
+  /// MIN : 0.0
+  /// MAX : 16.0
+  ///
+  /// if null, set to defaultPitch (1.0)
+  ///
+  Future<void> setPitch(double pitch) async {
+    await _sendChannel.invokeMethod('pitch', {
+      'id': id,
+      'pitch': pitch.clamp(minPitch, maxPitch),
+    });
+  }
+
   Future<Audio> _handlePlatformAsset(Audio input) async {
     if (defaultTargetPlatform == TargetPlatform.macOS &&
         input.audioType == AudioType.asset &&
@@ -1493,6 +1571,7 @@ class _CurrentPlaylist {
   final bool? showNotification;
   LoopMode? loopMode;
   final double? playSpeed;
+  final double? pitch;
   final NotificationSettings? notificationSettings;
   final AudioFocusStrategy? audioFocusStrategy;
   final PlayInBackground? playInBackground;
@@ -1595,6 +1674,7 @@ class _CurrentPlaylist {
     this.respectSilentMode,
     this.showNotification,
     this.playSpeed,
+    this.pitch,
     this.notificationSettings,
     this.playInBackground,
     this.loopMode,

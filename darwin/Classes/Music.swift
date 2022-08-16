@@ -171,7 +171,11 @@ public class Player : NSObject, AVAudioPlayerDelegate {
             #endif
         }
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> my_branch
     #if os(iOS)
     var targets: [String:Any] = [:]
 
@@ -258,9 +262,15 @@ public class Player : NSObject, AVAudioPlayerDelegate {
 
             return .success
         }
+<<<<<<< HEAD
 
 //        //https://stackoverflow.com/questions/34563451/set-mpnowplayinginfocenter-with-other-background-audio-playing
 //        //This isn't currently possible in iOS. Even just changing your category options to .MixWithOthers causes your nowPlayingInfo to be ignored.
+=======
+        
+        //https://stackoverflow.com/questions/34563451/set-mpnowplayinginfocenter-with-other-background-audio-playing
+        //This isn't currently possible in iOS. Even just changing your category options to .MixWithOthers causes your nowPlayingInfo to be ignored.
+>>>>>>> my_branch
 //        do {
 //            if #available(iOS 10.0, *) {
 //                try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [])
@@ -468,10 +478,16 @@ public class Player : NSObject, AVAudioPlayerDelegate {
     }
 
     var currentSongDurationMs : Float64 = Float64(0.0)
+<<<<<<< HEAD
     var respectSilentMode = false
     var needRecord = false
     var playStream = false
 
+=======
+    var needRecord = false
+    var playStream = false
+    
+>>>>>>> my_branch
     func open(assetPath: String,
               assetPackage: String?,
               audioType: String,
@@ -487,11 +503,19 @@ public class Player : NSObject, AVAudioPlayerDelegate {
               networkHeaders: NSDictionary?,
               result: @escaping FlutterResult,
               needRecord: Bool,
+<<<<<<< HEAD
               playStream: Bool){
         self.stop()
         self.needRecord = needRecord
         self.playStream = playStream
         self.respectSilentMode = respectSilentMode
+=======
+              playStream: Bool
+    ){
+        self.stop()
+        self.needRecord = needRecord
+        self.playStream = playStream
+>>>>>>> my_branch
         guard let url = self.getUrlByType(path: assetPath, audioType: audioType, assetPackage: assetPackage) else {
             log("resource not found \(assetPath)")
             result("")
@@ -499,19 +523,25 @@ public class Player : NSObject, AVAudioPlayerDelegate {
         }
 
         do {
+<<<<<<< HEAD
             self.player = nil
             setupCategories()
 
+=======
+            setupCategories()
+        
+>>>>>>> my_branch
             var item : SlowMoPlayerItem
             if networkHeaders != nil && networkHeaders!.count > 0 {
                 let asset = AVURLAsset(url: url, options: [
                     "AVURLAssetHTTPHeaderFieldsKey": networkHeaders!,
-                    "AVURLAssetOutOfBandMIMETypeKey": "mp3"
+                    "AVURLAssetOutOfBandMIMETypeKey": "audio/mpeg"
                 ])
                 item = SlowMoPlayerItem(asset: asset)
             } else {
                 item = SlowMoPlayerItem(url: url)
             }
+            item.audioTimePitchAlgorithm = .timeDomain
             self.player = AVQueuePlayer(playerItem: item)
 
 
@@ -568,15 +598,26 @@ public class Player : NSObject, AVAudioPlayerDelegate {
                         self?.setupMediaPlayerNotificationView(notificationSettings: notificationSettings, audioMetas: audioMetas, isPlaying: false)
                         #endif
                     }
+<<<<<<< HEAD
 
+=======
+                    
+                    self?.setPlaySpeed(playSpeed: playSpeed)
+                    
+>>>>>>> my_branch
                     if(autoStart == true){
                         self?.play()
                     }
 
                     self?.setVolume(volume: volume)
+<<<<<<< HEAD
 
                     self?.setPlaySpeed(playSpeed: playSpeed)
 
+=======
+                  
+                    
+>>>>>>> my_branch
                     if(seek != nil){
                         self?.seek(to: seek!)
                     }
@@ -791,7 +832,101 @@ public class Player : NSObject, AVAudioPlayerDelegate {
     func getSecondsFromCMTime(_ time: CMTime) -> Double {
         return self.getMillisecondsFromCMTime(time) / 1000;
     }
+<<<<<<< HEAD
 
+=======
+    
+    func setupCategories(){
+        #if os(iOS)
+        do{
+            let session = AVAudioSession.sharedInstance()
+            let headphonesConnected = playStream ? session.currentRoute.outputs.filter({
+                $0.portType == .builtInSpeaker
+            }).isEmpty : false
+            var category = AVAudioSession.Category.playback
+            var mode = AVAudioSession.Mode.moviePlayback
+            if (needRecord || headphonesConnected){
+                category =  AVAudioSession.Category.playAndRecord
+                mode = AVAudioSession.Mode.voiceChat
+            }
+            if (session.category != category){
+                /* set session category and mode with options */
+                if #available(iOS 10.0, *) {
+                    try AVAudioSession.sharedInstance().setCategory(category, mode: mode, options: [])
+                    try AVAudioSession.sharedInstance().setActive(true)
+                } else {
+                    try AVAudioSession.sharedInstance().setCategory(category)
+                    try AVAudioSession.sharedInstance().setActive(true)
+
+                }
+                debugPrint("play music")
+                debugPrint(AVAudioSession.sharedInstance().category)
+                debugPrint(AVAudioSession.sharedInstance().mode)
+            }
+        } catch (_){ }
+        #endif
+    }
+
+    @objc func routeChange(notification: Notification) {
+        guard let userInfo = notification.userInfo,
+            let reasonValue = userInfo[AVAudioSessionRouteChangeReasonKey] as? UInt,
+            let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue) else {
+                return
+        }
+        // Switch over the route change reason.
+
+        print("reason")
+        print(reason)
+        switch reason {
+
+        case .newDeviceAvailable: // New device found.
+            setupCategories()
+        case .oldDeviceUnavailable: // Old device removed.
+                setupCategories()
+
+        default: ()
+        }
+    }
+    
+    @objc func handleInterruption(_ notification: Notification) {
+        #if os(iOS)
+        if(!self.audioFocusStrategy.request) {
+            return
+        }
+        
+        guard let userInfo = notification.userInfo,
+            let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+            let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+                return
+        }
+        
+        // Switch over the interruption type.
+        switch type {
+            
+        case .began:
+            // An interruption began. Update the UI as needed.
+            pause()
+            
+        case .ended:
+            // An interruption ended. Resume playback, if appropriate.
+            
+            guard let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt else { return }
+            let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
+            if options.contains(.shouldResume) {
+                if(self.audioFocusStrategy.resumeAfterInterruption) {
+                    self.invokeListenerPlayPause()
+                }
+                // Interruption ended. Playback should resume.
+            } else {
+                // Interruption ended. Playback should not resume.
+            }
+            
+        default: ()
+        }
+        #endif
+    }
+    
+>>>>>>> my_branch
     private func setBuffering(_ value: Bool){
         self.channel.invokeMethod(Music.METHOD_IS_BUFFERING, arguments: value)
     }
@@ -876,7 +1011,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
     }
 
     func play(){
-        if #available(iOS 10.0, *) {
+        if #available(iOS 10.0, macOS 10.12, *) {
             self.player?.playImmediately(atRate: self.rate)
         } else {
             self.player?.play()
@@ -1497,7 +1632,14 @@ class Music : NSObject, FlutterPlugin {
                 let playStream = args["playStream"] as? Bool ?? false
 
                 let displayNotification = args["displayNotification"] as? Bool ?? false
+<<<<<<< HEAD
 
+=======
+                
+                let needRecord = args["needRecord"] as? Bool ?? false
+                let playStream = args["playStream"] as? Bool ?? false
+                
+>>>>>>> my_branch
                 let audioMetas = fetchAudioMetas(from: args)
 
                 let notifSettings = notificationSettings(from: args)
