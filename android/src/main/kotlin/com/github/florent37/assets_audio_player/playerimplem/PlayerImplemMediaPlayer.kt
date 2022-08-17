@@ -48,7 +48,8 @@ class PlayerImplemTesterMediaPlayer : PlayerImplemTester {
                     audioType = configuration.audioType,
                     assetAudioPackage = configuration.assetAudioPackage,
                     networkHeaders = configuration.networkHeaders,
-                    flutterAssets = configuration.flutterAssets
+                    flutterAssets = configuration.flutterAssets,
+                    drmConfiguration = configuration.drmConfiguration
             )
             return PlayerFinder.PlayerWithDuration(
                     player = mediaPlayer!!,
@@ -113,7 +114,8 @@ class PlayerImplemMediaPlayer(
             assetAudioPath: String?,
             audioType: String,
             networkHeaders: Map<*, *>?,
-            assetAudioPackage: String?
+            assetAudioPackage: String?,
+            drmConfiguration: Map<*, *>?
     ): DurationMS = withContext(Dispatchers.IO) {
         suspendCoroutine<DurationMS> { continuation ->
             var onThisMediaReady = false
@@ -207,10 +209,13 @@ class PlayerImplemMediaPlayer(
         //not possible
     }
 
+    override fun setPitch(pitch: Float) {
+        //not possible
+    }
+
     override fun getSessionId(listener: (Int) -> Unit) {
         mediaPlayer?.audioSessionId?.takeIf { it != 0 }?.let(listener)
     }
-
 }
 
 fun Map<*, *>.toMapString(): Map<String, String> {
