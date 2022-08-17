@@ -1290,7 +1290,7 @@ class AssetsAudioPlayer {
   ///
   Future<void> playOrPause() async {
     final playing = _isPlaying.value;
-    print("__interaption__playing $playing");
+    print('__interaption__playing $playing');
     if (playing) {
       await pause();
     } else {

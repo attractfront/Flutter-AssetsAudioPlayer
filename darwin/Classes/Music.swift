@@ -456,7 +456,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
 
     var needRecord = false
     var playStream = false
-    
+
     func open(assetPath: String,
               assetPackage: String?,
               audioType: String,
@@ -485,7 +485,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
         do {
             self.player = nil
             setupCategories()
-    
+
             var item : SlowMoPlayerItem
             if networkHeaders != nil && networkHeaders!.count > 0 {
                 let asset = AVURLAsset(url: url, options: [
@@ -553,9 +553,9 @@ public class Player : NSObject, AVAudioPlayerDelegate {
                         self?.setupMediaPlayerNotificationView(notificationSettings: notificationSettings, audioMetas: audioMetas, isPlaying: false)
                         #endif
                     }
-                    
+
                     self?.setPlaySpeed(playSpeed: playSpeed)
-                    
+
 
                     if(autoStart == true){
                         self?.play()
@@ -776,7 +776,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
     func getSecondsFromCMTime(_ time: CMTime) -> Double {
         return self.getMillisecondsFromCMTime(time) / 1000;
     }
-    
+
     private func setBuffering(_ value: Bool){
         self.channel.invokeMethod(Music.METHOD_IS_BUFFERING, arguments: value)
     }
@@ -830,6 +830,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
 
     func stop(){
         self.player?.pause()
+        self.player = nil
         self.player?.rate = 0.0
 
         self.updateNotifStatus(playing: self.playing, stopped: true, rate: self.player?.rate)
@@ -874,9 +875,9 @@ public class Player : NSObject, AVAudioPlayerDelegate {
 
     func changeSpeaker(){
         let session = AVAudioSession.sharedInstance()
-        let headphonesConnected = playStream ? session.currentRoute.outputs.filter({
+        let headphonesConnected = session.currentRoute.outputs.filter({
             $0.portType == .builtInSpeaker
-        }).isEmpty : false
+        }).isEmpty
         if (needRecord && !headphonesConnected){
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [self] in
               do {
@@ -983,6 +984,7 @@ public class Player : NSObject, AVAudioPlayerDelegate {
 
     func _deinit(){
         removeObservers()
+        self.player = nil
         self.observerStatus.forEach {
             $0.invalidate()
         }
@@ -998,15 +1000,10 @@ public class Player : NSObject, AVAudioPlayerDelegate {
 
     func pause(){
         self.player?.pause()
-
-//        self.updateNotifStatus(playing: false, stopped: false, rate: 0)
-
-//        self.playing = false
         self.currentTimeTimer?.invalidate()
     }
 
     @objc func updateTimer(){
-        //log("updateTimer")
         if let p = self.player {
             if let currentItem = p.currentItem {
                 self.updateCurrentTime(time: currentItem.currentTime())
@@ -1482,7 +1479,7 @@ class Music : NSObject, FlutterPlugin {
                 let playStream = args["playStream"] as? Bool ?? false
 
                 let displayNotification = args["displayNotification"] as? Bool ?? false
-                
+
                 let audioMetas = fetchAudioMetas(from: args)
 
                 let notifSettings = notificationSettings(from: args)
