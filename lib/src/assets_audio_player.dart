@@ -54,6 +54,7 @@ const String METHOD_PITCH = 'player.pitch';
 const String METHOD_ERROR = 'player.error';
 const String METHOD_AUDIO_SESSION_ID = 'player.audioSessionId';
 const String METHOD_PLAY_AFTER_INTERRUPTION = 'player.afterInterruption';
+const String METHOD_UPDATE_CATEGORIES = 'player.updateCategories';
 
 enum PlayerState {
   play,
@@ -1462,6 +1463,16 @@ class AssetsAudioPlayer {
   ///
   Future<void> stop() async {
     return _stop(removeNotification: true);
+  }
+
+  Future<void> updateIOSCategories({bool mixWithOthers: false, bool needRecord = false}) async {
+    return _updateIOSCategories(mixWithOthers, needRecord);
+  }
+
+  Future<void> _updateIOSCategories(bool mixWithOthers, bool needRecord) async {
+    _stopped = true;
+    await _sendChannel.invokeMethod(
+        'updateIOSCategories', {'id': id, 'mixWithOthers': mixWithOthers, 'needRecord': needRecord});
   }
 
   Future<void> _stop({bool removeNotification = true}) async {

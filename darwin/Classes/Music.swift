@@ -625,10 +625,17 @@ public class Player : NSObject, AVAudioPlayerDelegate {
                 category =  AVAudioSession.Category.playAndRecord
                 mode = AVAudioSession.Mode.videoChat
             }
-            if (mixWithOthers && !headphonesConnected) {
-                category = AVAudioSession.Category.playAndRecord
-                mode = AVAudioSession.Mode.videoRecording
-                options = [AVAudioSession.CategoryOptions.mixWithOthers]
+            if (mixWithOthers) {
+                if (headphonesConnected) {
+                    category = AVAudioSession.Category.soloAmbient
+                    mode = AVAudioSession.Mode.videoRecording
+                    options = [AVAudioSession.CategoryOptions.mixWithOthers]
+                } else {
+                    category = AVAudioSession.Category.playAndRecord
+                    mode = AVAudioSession.Mode.videoRecording
+                    options = [AVAudioSession.CategoryOptions.mixWithOthers]
+                }
+
             }
             
             if (session.category != category || mixWithOthers){
@@ -1037,6 +1044,7 @@ class Music : NSObject, FlutterPlugin {
     static let METHOD_PLAY_OR_PAUSE = "player.playOrPause"
     static let METHOD_ERROR = "player.error"
     static let METHOD_PLAY_AFTER_INTERRUPTION = "player.afterInterruption"
+    static let METHOD_UPDATE_CATEGORIES = "player.updateCategories"
 
     var players = Dictionary<String, Player>()
 
@@ -1124,7 +1132,27 @@ class Music : NSObject, FlutterPlugin {
                 self.getOrCreatePlayer(id: id)
                     .play()
                 result(true)
+            case "updateIOSCategories" :
+                guard let args = call.arguments as? NSDictionary else {
+                    result(FlutterError(
+                        code: "METHOD_CALL",
+                        message: call.method + " Arguments must be an NSDictionary",
+                        details: nil)
+                    )
+                    break
+                }
+                guard let id = args["id"] as? String, let mixWithOthers = args["mixWithOthers"] as? Bool, let needRecord = args["needRecord"] as? Bool else {
+                    result(FlutterError(
+                        code: "METHOD_CALL",
+                        message: call.method + " Arguments[id] must be a String",
+                        details: nil)
+                    )
+                    break
+                }
+                self.getOrCreatePlayer(id: id).mixWithOthers = mixWithOthers
+                self.getOrCreatePlayer(id: id).needRecord = needRecord
 
+                self.getOrCreatePlayer(id: id).setupCategories()
             case "pause" :
                 guard let args = call.arguments as? NSDictionary else {
                     result(FlutterError(
