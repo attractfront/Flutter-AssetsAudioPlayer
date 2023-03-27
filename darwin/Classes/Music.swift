@@ -635,18 +635,18 @@ public class Player : NSObject, AVAudioPlayerDelegate {
                     mode = AVAudioSession.Mode.videoRecording
                     options = [AVAudioSession.CategoryOptions.mixWithOthers]
                 }
-
             }
-            
+
             if (session.category != category || mixWithOthers){
                 /* set session category and mode with options */
 
+                try AVAudioSession.sharedInstance().setActive(false)
                 if #available(iOS 10.0, *) {
                     try AVAudioSession.sharedInstance().setCategory(category, mode: mode, options: options)
                 } else {
                     try AVAudioSession.sharedInstance().setCategory(category)
                 }
-                
+
                 try AVAudioSession.sharedInstance().setActive(true)
                 debugPrint("play music")
                 debugPrint(AVAudioSession.sharedInstance().category)
