@@ -5,8 +5,16 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <application>
-        <receiver android:name=".notification.NotificationActionReceiver"/>
-        <receiver android:name=".notification.CustomMediaButtonReceiver" >
+        <receiver
+            android:name=".notification.NotificationActionReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".notification.CustomMediaButtonReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
@@ -15,12 +23,14 @@
         <service
             android:name=".notification.NotificationService"
             android:enabled="true"
+            android:foregroundServiceType="mediaPlayback"
             android:exported="true">
-            <!--
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
-            -->
         </service>
 
     </application>
