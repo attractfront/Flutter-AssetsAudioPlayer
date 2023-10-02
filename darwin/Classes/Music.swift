@@ -171,6 +171,19 @@ public class Player : NSObject, AVAudioPlayerDelegate {
             #endif
         }
     }
+    
+    #if os(iOS)
+    func getAudioCategory(respectSilentMode: Bool, showNotification: Bool) ->  AVAudioSession.Category {
+        if(showNotification) {
+            return AVAudioSession.Category.playback
+        } else if(respectSilentMode) {
+            return AVAudioSession.Category.soloAmbient
+        } else {
+            return AVAudioSession.Category.playback
+        }
+    }
+    #endif
+    
     #if os(iOS)
     var targets: [String:Any] = [:]
 
@@ -487,7 +500,29 @@ public class Player : NSObject, AVAudioPlayerDelegate {
         do {
             self.player = nil
             setupCategories()
-
+            #if os(iOS)
+            let category = getAudioCategory(respectSilentMode: respectSilentMode, showNotification: displayNotification)
+            let mode = AVAudioSession.Mode.default
+            
+            
+            print("category " + category.rawValue)
+            print("mode " + mode.rawValue)
+            print("displayNotification " + displayNotification.description)
+            print("url: " + url.absoluteString)
+            
+            /* set session category and mode with options */
+            if #available(iOS 10.0, *) {
+                //try AVAudioSession.sharedInstance().setCategory(category, mode: mode, options: [.mixWithOthers])
+                try AVAudioSession.sharedInstance().setCategory(category, mode: .default, options: [])
+                try AVAudioSession.sharedInstance().setActive(true)
+            } else {
+                
+                try AVAudioSession.sharedInstance().setCategory(category)
+                try AVAudioSession.sharedInstance().setActive(true)
+                
+            }
+            #endif
+            
             var item : SlowMoPlayerItem
             if networkHeaders != nil && networkHeaders!.count > 0 {
                 let asset = AVURLAsset(url: url, options: [
