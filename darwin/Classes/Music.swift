@@ -640,7 +640,6 @@ public class Player : NSObject, AVAudioPlayerDelegate {
             if (session.category != category || mixWithOthers){
                 /* set session category and mode with options */
 
-                try AVAudioSession.sharedInstance().setActive(false)
                 if #available(iOS 10.0, *) {
                     try AVAudioSession.sharedInstance().setCategory(category, mode: mode, options: options)
                 } else {
